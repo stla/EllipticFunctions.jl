@@ -59,3 +59,10 @@ end
     (2 * gamma(3/4)^4 + pi^2) / (4 * sqrt(pi) * gamma(3/4)^2)
   )
 end
+
+@testset "A value of agm." begin
+  @test isapprox(
+    agm(1, sqrt(2)),
+    2 * pi^(3/2) * sqrt(2) / gamma(1/4)^2
+  )
+end

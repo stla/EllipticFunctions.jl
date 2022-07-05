@@ -17,6 +17,7 @@ export CarlsonRD
 export ellipticF
 export ellipticK
 export ellipticE
+export agm
 
 function areclose(z1::Number, z2::Number)
   mod_z2 = abs(z2)
@@ -535,6 +536,21 @@ Complete elliptic integral of the second kind.
 """
 function ellipticE(m::Number)
   return ellipticE(pi/2, m)
+end
+
+"""
+    agm(x, y)
+
+Arithmetic-geometric mean.
+
+# Arguments
+- `x`,`y`: complex numbers
+"""
+function agm(x::Number, y::Number)
+  if x + y == 0 || x == 0 || y == 0
+    return complex(0.0, 0.0)
+  end
+  return pi/4 * (x + y) / ellipticK(((x-y)/(x+y))^2)
 end
 
 end  # module Jacobi
