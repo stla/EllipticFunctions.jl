@@ -22,14 +22,9 @@ export EisensteinE2
 export wp
 
 function areclose(z1::Number, z2::Number)
-  mod_z2 = abs(z2)
-  maxmod = (mod_z2 < eps()) ? 1.0 : max(abs(z1), mod_z2)
-  return abs(z1 - z2) < 2.0 * eps() * maxmod
-end
-
-function modulo(a::Real, p::Real)
-  i = a > 0 ? floor(a / p) : ceil(a / p)
-  return a - i * p
+  mod_z2 = abs2(z2)
+  maxmod = (mod_z2 < eps()^2) ? 1.0 : max(abs2(z1), mod_z2)
+  return abs2(z1 - z2) < 4.0 * eps()^2 * maxmod
 end
 
 function calctheta3(z::Number, tau::Number, passes::Int64)
@@ -38,8 +33,8 @@ function calctheta3(z::Number, tau::Number, passes::Int64)
   while n < 2000
     n += 1
     qweight =
-      exp(n * 1im * pi * (n * tau + 2 * z)) +
-      exp(n * 1im * pi * (n * tau - 2 * z))
+      cispi(n * (n * tau + 2 * z)) +
+      cispi(n * (n * tau - 2 * z))
     out += qweight
     if n >= 3 && areclose(out + qweight, out)
       return log(out)
@@ -56,7 +51,7 @@ function argtheta3(z::Number, tau::Number, passin::Int64)
   end
   zimg = imag(z)
   h = imag(tau) / 2
-  zuse = complex(modulo(real(z), 1), zimg)
+  zuse = complex(mod(real(z), 1), zimg)
   if zimg < -h
     out = argtheta3(-zuse, tau, passes)
   elseif zimg >= h
@@ -76,9 +71,9 @@ function dologtheta3(z::Number, tau::Number, passin::Int64)
   end
   rl = real(tau)
   if rl >= 0
-    tau2 = modulo(rl + 1.0, 2.0) - 1.0 + 1im * imag(tau)
+    tau2 = mod(rl + 1.0, 2.0) - imag(tau) * im
   else
-    tau2 = modulo(rl - 1.0, 2.0) + 1.0 + 1im * imag(tau)
+    tau2 = mod(rl - 1.0, 2.0) + imag(tau) * im
   end
   if abs(tau2) < 0.98 && imag(tau2) < 0.98
     tauprime = -1.0 / tau2
@@ -144,7 +139,7 @@ function _jtheta4_raw(z::Number, tau::Number)
 end
 
 function _jtheta1dash(z::Number, tau::Number)
-  q = exp(1im * pi * tau)
+  q = cispi(tau)
   out = complex(0.0, 0.0)
   alt = -1.0
   for n = 0:2000
@@ -152,7 +147,7 @@ function _jtheta1dash(z::Number, tau::Number)
     k = 2.0 * n + 1.0
     outnew = out + alt * q^(n * (n + 1)) * k * cos(k * z)
     if areclose(out, outnew)
-      return 2 * q^0.25 * out
+      return 2 * sqrt(sqrt(q)) * out
     end
     out = outnew
   end
@@ -160,8 +155,7 @@ function _jtheta1dash(z::Number, tau::Number)
 end
 
 function _etaDedekind(tau::Number)
-  return exp(
-    1im * pi * tau / 12.0 + dologtheta3((tau + 1.0) / 2.0, 3.0 * tau, 0)
+  return cispi(tau / 12.0 + dologtheta3((tau + 1.0) / 2.0, 3.0 * tau, 0)
   )
 end
 
@@ -417,7 +411,7 @@ function CarlsonRD(x::Number, y::Number, z::Number)
   yzero = y == 0
   zzero = z == 0
   @assert xzero + yzero + zzero <= 1 "At most one of `x`, `y`, `z` can be 0."
-  dx = typemax(Float64)
+  dx = typemax(Float64)    dy = abs(1.0 - y/A)
   dy = typemax(Float64)
   dz = typemax(Float64)
   epsilon = 2.0 * eps()
