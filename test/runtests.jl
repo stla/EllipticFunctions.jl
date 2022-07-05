@@ -86,3 +86,13 @@ end
     e1 + e2 + e3, 0; atol = 1e-10
   )
 end
+
+@testset "A value of wsigma." begin
+  omega1 = gamma(1/4)^2 / 4 / sqrt(pi)
+  omega2 = 1im * omega1
+  omega = (omega1, omega2)
+  @test isapprox(
+    wsigma(omega1; omega = omega),
+    exp(pi/8) * 2^(1/4)
+  )
+end

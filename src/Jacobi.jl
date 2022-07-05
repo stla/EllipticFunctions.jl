@@ -20,6 +20,7 @@ export ellipticE
 export agm
 export EisensteinE2
 export wp
+export wsigma
 
 function areclose(z1::Number, z2::Number)
   mod_z2 = abs(z2)
@@ -181,7 +182,7 @@ function _jtheta1dash0(tau::Number)
 end
 
 function _jtheta1dashdashdash0(tau::Number)
-  return -2.0 * _etaDedekind(tau)^3 * Eisen2(tau)
+  return -2.0 * _etaDedekind(tau)^3 * _EisensteinE2(tau)
 end
 
 function _dljtheta1(z::Number, tau::Number)
@@ -617,5 +618,34 @@ function wp(z::Union{N,Vector{N}}; tau::Union{Missing,Number}=missing, omega::Un
   end
 end
 
+
+"""
+    wsigma(z; tau, omega)
+
+Weierstrass sigma-function.
+
+# Arguments
+- `z`: complex number or vector of complex numbers
+- `tau`: half-periods ratio, complex number with non negative imaginary part
+- `omega`: half-periods, a pair of complex numbers; exactly one of `tau` or `omega` must be given
+"""
+function wsigma(z::Union{N,Vector{N}}; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing) where N<:Number
+  local omega1
+  nmissing = ismissing(tau) + ismissing(omega)
+  @assert nmissing == 1 "You must supply either `tau` or `omega`."
+  if !ismissing(tau)
+    @assert imag(tau) > 0 "Invalid `tau`."
+    omega1 = 0.5
+  elseif !ismissing(omega)
+    omega1 = omega[1]
+    tau = omega[2]/omega1
+    @assert imag(tau) > 0 "Invalid `omega`."
+  end
+  w1 = -2 * omega1 / pi
+  j1 = _jtheta1(z/w1, tau)
+  f = _jtheta1dash0(tau)
+  h = -pi/6/w1 * _jtheta1dashdashdash0(tau) / f
+  return w1 * exp(h*z*z/w1/pi) * j1 / f
+end
 
 end  # module Jacobi
