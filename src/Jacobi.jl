@@ -18,6 +18,7 @@ export ellipticF
 export ellipticK
 export ellipticE
 export agm
+export EisensteinE2
 
 function areclose(z1::Number, z2::Number)
   mod_z2 = abs(z2)
@@ -145,8 +146,21 @@ function _jtheta1dash(z::Number, tau::Number)
   error("Reached 2000 iterations.")
 end
 
+function _etaDedekind(tau::Number)
+  return exp(
+    1im * pi * tau / 12.0 + dologtheta3((tau + 1.0) / 2.0, 3.0 * tau, 0)
+  )
+end
+
 function isvector(x)
   return length(size(x)) == 1
+end
+
+function _EisensteinE2(tau::Number)
+  j3 = _jtheta3(0, tau)
+  lbd = (_jtheta2(0, tau) / j3)^4
+  j3sq = j3^2
+  return 6.0/pi * ellipticE(lbd) * j3sq - j3sq**2 - _jtheta4(0, tau)**4
 end
 
 # exports ####
@@ -285,11 +299,9 @@ Dedekind eta function.
 # Arguments
 - `tau`: complex number with nonnegative imaginary part
 """
-function etaDedekind(tau::N) where N<:Number
+function etaDedekind(tau::Number)
   @assert imag(tau) > 0 "Invalid `tau`."
-  return exp(
-    1im * pi * tau / 12.0 + dologtheta3((tau + 1.0) / 2.0, 3.0 * tau, 0)
-  )
+  return _etaDedekind(tau)
 end
 
 """
@@ -528,5 +540,35 @@ function agm(x::Number, y::Number)
   end
   return pi/4 * (x + y) / ellipticK(((x-y)/(x+y))^2)
 end
+
+"""
+    EisensteinE2(q)
+
+Eisenstein E-series of weight 2.
+
+# Arguments
+- `q`: nome, complex number; it must not be a negative real number and its modulus must be strictly smaller than 1
+"""
+function EisensteinE2(q::Number)
+  @assert abs(q) < 1 "Invalid `q`."
+  @assert imag(q) != 0 || real(q) > 0 "Invalid `q`."
+  tau = -1im * log(q) / pi / 2.0
+  return _EisensteinE2(tau)
+end
+
+function jtheta1dash0(tau::Number){
+  return exp(_ljtheta2(0.0, tau) + _ljtheta3(0.0, tau) + _ljtheta4(0.0, tau))
+end
+
+function jtheta1dashdashdash0(tau::Number)
+  return -2.0 * _etaDedekind(tau)^3 * Eisen2(tau)
+end
+
+function dljtheta1(z::Number, tau::Number) {
+  if z == 0
+    return jtheta1dash0(tau) / _jtheta1(0.0, tau)
+  end
+  return _jtheta1dash(z, tau) / _jtheta1(z, tau)
+}
 
 end  # module Jacobi
