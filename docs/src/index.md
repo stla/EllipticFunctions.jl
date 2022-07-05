@@ -26,6 +26,8 @@ ellipticF
 ellipticK
 ellipticE
 agm
+EisensteinE2
+wp
 ```
 
 ## Index
