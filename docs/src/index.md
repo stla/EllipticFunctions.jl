@@ -9,4 +9,8 @@ ljtheta3
 jtheta3
 ljtheta4
 jtheta4
+jtheta1dash
+etaDedekind
+lambda
+kleinj
 ```
