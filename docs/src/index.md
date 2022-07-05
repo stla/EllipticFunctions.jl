@@ -28,6 +28,8 @@ ellipticE
 agm
 EisensteinE2
 wp
+wsigma
+wzeta
 ```
 
 ## Index
