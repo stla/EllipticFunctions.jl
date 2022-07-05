@@ -153,14 +153,14 @@ end
 Logarithm of the first Jacobi theta function.
 
 # Arguments
-- `z`: complex number
+- `z`: complex number or vector of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function ljtheta1(z::Number, tau::Number)
+function ljtheta1(z::Union{N,Vector{N}}, tau::Number) where N<:Number
   if imag(tau) <= 0
     ArgumentError("Invalid `tau`.")
   end
-  return _ljtheta1(z, tau)
+  return _ljtheta1.(z, tau)
 end
 
 """
@@ -169,14 +169,14 @@ end
 First Jacobi theta function.
 
 # Arguments
-- `z`: complex number
+- `z`: complex number or vector of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function jtheta1(z::Number, tau::Number)
+function jtheta1(z::Union{N,Vector{N}}, tau::Number) where N<:Number
   if imag(tau) <= 0
     ArgumentError("Invalid `tau`.")
   end
-  return _jtheta1(z, tau)
+  return _jtheta1.(z, tau)
 end
 
 """
@@ -185,14 +185,14 @@ end
 Logarithm of the second Jacobi theta function.
 
 # Arguments
-- `z`: complex number
+- `z`: complex number or vector of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function ljtheta2(z::Number, tau::Number)
+function ljtheta2(z::Union{N,Vector{N}}, tau::Number) where N<:Number
   if imag(tau) <= 0
     ArgumentError("Invalid `tau`.")
   end
-  return _ljtheta2(z, tau)
+  return _ljtheta2.(z, tau)
 end
 
 """
@@ -201,14 +201,14 @@ end
 Second Jacobi theta function.
 
 # Arguments
-- `z`: complex number
+- `z`: complex number or vector of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function jtheta2(z::Number, tau::Number)
+function jtheta2(z::Union{N,Vector{N}}, tau::Number) where N<:Number
   if imag(tau) <= 0
     ArgumentError("Invalid `tau`.")
   end
-  return _jtheta2(z, tau)
+  return _jtheta2.(z, tau)
 end
 
 """
@@ -217,14 +217,14 @@ end
 Logarithm of the third Jacobi theta function.
 
 # Arguments
-- `z`: complex number
+- `z`: complex number or vector of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function ljtheta3(z::Number, tau::Number)
+function ljtheta3(z::Union{N,Vector{N}}, tau::Number) where N<:Number
   if imag(tau) <= 0
     ArgumentError("Invalid `tau`.")
   end
-  return _ljtheta3(z, tau)
+  return _ljtheta3.(z, tau)
 end
 
 """
@@ -233,14 +233,14 @@ end
 Third Jacobi theta function.
 
 # Arguments
-- `z`: complex number
+- `z`: complex number or vector of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function jtheta3(z::Number, tau::Number)
+function jtheta3(z::Union{N,Vector{N}}, tau::Number) where N<:Number
   if imag(tau) <= 0
     ArgumentError("Invalid `tau`.")
   end
-  return _jtheta3(z, tau)
+  return _jtheta3.(z, tau)
 end
 
 """
@@ -249,14 +249,14 @@ end
 Logarithm of the fourth Jacobi theta function.
 
 # Arguments
-- `z`: complex number
+- `z`: complex number or vector of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function ljtheta4(z::Number, tau::Number)
+function ljtheta4(z::Union{N,Vector{N}}, tau::Number) where N<:Number
   if imag(tau) <= 0
     ArgumentError("Invalid `tau`.")
   end
-  return _ljtheta4(z, tau)
+  return _ljtheta4.(z, tau)
 end
 
 """
@@ -265,14 +265,14 @@ end
 Fourth Jacobi theta function.
 
 # Arguments
-- `z`: complex number
+- `z`: complex number or vector of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function jtheta4(z::Number, tau::Number)
+function jtheta4(z::Union{N,Vector{N}}, tau::Number) where N<:Number
   if imag(tau) <= 0
     ArgumentError("Invalid `tau`.")
   end
-  return _jtheta4(z, tau)
+  return _jtheta4.(z, tau)
 end
 
 """
