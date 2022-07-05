@@ -145,6 +145,10 @@ function _jtheta1dash(z::Number, tau::Number)
   error("Reached 2000 iterations.")
 end
 
+function isvector(x)
+  return length(size(x)) == 1
+end
+
 # exports ####
 
 """
@@ -157,9 +161,7 @@ Logarithm of the first Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function ljtheta1(z::Union{N,Vector{N}}, tau::Number) where N<:Number
-  if imag(tau) <= 0
-    ArgumentError("Invalid `tau`.")
-  end
+  @assert imag(tau) > 0 "Invalid `tau`."
   return _ljtheta1.(z, tau)
 end
 
@@ -173,9 +175,7 @@ First Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function jtheta1(z::Union{N,Vector{N}}, tau::Number) where N<:Number
-  if imag(tau) <= 0
-    ArgumentError("Invalid `tau`.")
-  end
+  @assert imag(tau) > 0 "Invalid `tau`."
   return _jtheta1.(z, tau)
 end
 
@@ -189,9 +189,7 @@ Logarithm of the second Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function ljtheta2(z::Union{N,Vector{N}}, tau::Number) where N<:Number
-  if imag(tau) <= 0
-    ArgumentError("Invalid `tau`.")
-  end
+  @assert imag(tau) > 0 "Invalid `tau`."
   return _ljtheta2.(z, tau)
 end
 
@@ -205,9 +203,7 @@ Second Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function jtheta2(z::Union{N,Vector{N}}, tau::Number) where N<:Number
-  if imag(tau) <= 0
-    ArgumentError("Invalid `tau`.")
-  end
+  @assert imag(tau) > 0 "Invalid `tau`."
   return _jtheta2.(z, tau)
 end
 
@@ -221,9 +217,7 @@ Logarithm of the third Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function ljtheta3(z::Union{N,Vector{N}}, tau::Number) where N<:Number
-  if imag(tau) <= 0
-    ArgumentError("Invalid `tau`.")
-  end
+  @assert imag(tau) > 0 "Invalid `tau`."
   return _ljtheta3.(z, tau)
 end
 
@@ -237,9 +231,7 @@ Third Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function jtheta3(z::Union{N,Vector{N}}, tau::Number) where N<:Number
-  if imag(tau) <= 0
-    ArgumentError("Invalid `tau`.")
-  end
+  @assert imag(tau) > 0 "Invalid `tau`."
   return _jtheta3.(z, tau)
 end
 
@@ -253,9 +245,7 @@ Logarithm of the fourth Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function ljtheta4(z::Union{N,Vector{N}}, tau::Number) where N<:Number
-  if imag(tau) <= 0
-    ArgumentError("Invalid `tau`.")
-  end
+  @assert imag(tau) > 0 "Invalid `tau`."
   return _ljtheta4.(z, tau)
 end
 
@@ -269,9 +259,7 @@ Fourth Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function jtheta4(z::Union{N,Vector{N}}, tau::Number) where N<:Number
-  if imag(tau) <= 0
-    ArgumentError("Invalid `tau`.")
-  end
+  @assert imag(tau) > 0 "Invalid `tau`."
   return _jtheta4.(z, tau)
 end
 
@@ -285,9 +273,7 @@ Derivative of the first Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function jtheta1dash(z::Number, tau::Number)
-  if imag(tau) <= 0
-    ArgumentError("Invalid `tau`.")
-  end
+  @assert imag(tau) > 0 "Invalid `tau`."
   return _jtheta1dash(z, tau)
 end
 
@@ -299,10 +285,8 @@ Dedekind eta function.
 # Arguments
 - `tau`: complex number with nonnegative imaginary part
 """
-function etaDedekind(tau::Number)
-  if imag(tau) <= 0
-    ArgumentError("Invalid `tau`.")
-  end
+function etaDedekind(tau::N) where N<:Number
+  @assert imag(tau) > 0 "Invalid `tau`."
   return exp(
     1im * pi * tau / 12.0 + dologtheta3((tau + 1.0) / 2.0, 3.0 * tau, 0)
   )
@@ -317,9 +301,7 @@ Lambda modular function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function lambda(tau::Number)
-  if imag(tau) <= 0
-    ArgumentError("Invalid `tau`.")
-  end
+  @assert imag(tau) > 0 "Invalid `tau`."
   return (_jtheta2(0, tau) / _jtheta3(0, tau))^4
 end
 
@@ -332,9 +314,7 @@ Klein j-invariant function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function kleinj(tau::Number)
-  if imag(tau) <= 0
-    ArgumentError("Invalid `tau`.")
-  end
+  @assert imag(tau) > 0 "Invalid `tau`."
   lbd = (_jtheta2(0, tau) / _jtheta3(0, tau))^4
   x = lbd * (1.0 - lbd)
   return 256 * (1-x)^3 / x^2
@@ -353,9 +333,7 @@ function CarlsonRF(x::Number, y::Number, z::Number)
   xzero = x == 0
   yzero = y == 0
   zzero = z == 0
-  if xzero + yzero + zzero >= 2
-    ArgumentError("At most one of `x`, `y`, `z` can be 0.")
-  end
+  @assert xzero + yzero + zzero <= 1 "At most one of `x`, `y`, `z` can be 0."
   dx = typemax(Float64)
   dy = typemax(Float64)
   dz = typemax(Float64)
@@ -389,9 +367,7 @@ function CarlsonRD(x::Number, y::Number, z::Number)
   xzero = x == 0
   yzero = y == 0
   zzero = z == 0
-  if xzero + yzero + zzero >= 2
-    ArgumentError("At most one of `x`, `y`, `z` can be 0.")
-  end
+  @assert xzero + yzero + zzero <= 1 "At most one of `x`, `y`, `z` can be 0."
   dx = typemax(Float64)
   dy = typemax(Float64)
   dz = typemax(Float64)
