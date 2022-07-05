@@ -13,4 +13,7 @@ jtheta1dash
 etaDedekind
 lambda
 kleinj
+CarlsonRF
+ellipticF
+ellipticK
 ```
