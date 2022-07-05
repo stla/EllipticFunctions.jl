@@ -12,6 +12,9 @@ export jtheta1dash
 export etaDedekind
 export lambda
 export kleinj
+export CarlsonRF
+export ellipticF
+export ellipticK
 
 function areclose(z1::Number, z2::Number)
   mod_z2 = abs(z2)
@@ -332,6 +335,101 @@ function kleinj(tau::Number)
   lbd = (_jtheta2(0, tau) / _jtheta3(0, tau))^4
   x = lbd * (1.0 - lbd)
   return 256 * (1-x)^3 / x^2
+end
+
+"""
+    CarlsonRF(x, y, z)
+
+Carlson 'RF' integral.
+
+# Arguments
+- `x`,`y`,`z`: complex numbers; at most one of them can be zero
+"""
+function CarlsonRF(x::Number, y::Number, z::Number)
+  local A
+  xzero = x == 0
+  yzero = y == 0
+  zzero = z == 0
+  if xzero + yzero + zzero >= 2
+    ArgumentError("At most one of `x`, `y`, `z` can be 0.")
+  end
+  dx = typemax(Float64)
+  dy = typemax(Float64)
+  dz = typemax(Float64)
+  epsilon = 2.0 * eps()
+  while dx > epsilon || dy > epsilon || dz > epsilon
+    lambda = sqrt(x)*sqrt(y) + sqrt(y)*sqrt(z) + sqrt(z)*sqrt(x);
+    x = (x + lambda) / 4.0
+    y = (y + lambda) / 4.0
+    z = (z + lambda) / 4.0
+    A = (x + y + z) / 3.0
+    dx = abs(1.0 - x/A)
+    dy = abs(1.0 - y/A)
+    dz = abs(1.0 - z/A)
+  end
+  E2 = dx*dy + dy*dz + dz*dx
+  E3 = dy*dx*dz
+  return (1 - E2/10 + E3/14 + E2*E2/24 - 3*E2*E3/44 - 5*E2*E2*E2/208 +
+    3*E3*E3/104 + E2*E2*E3/16) / sqrt(A)
+end
+
+"""
+    ellipticF(phi, m)
+
+Incomplete elliptic integral of the first kind.
+
+# Arguments
+- `phi`: complex number, the amplitude
+- `m`: complex number, the squared modulus
+"""
+function ellipticF(phi::Number, m::Number)
+  local k
+  if phi == 0 || m == Inf || m == -Inf
+    return complex(0.0, 0.0)
+  end
+  if real(phi) == 0 && imag(phi) == Inf && imag(m) == 0 && real(m) > 0 && real(m) < 1
+    return sign(imag(phi)) *
+        (ellipticF(pi/2, m) - ellipticF(pi/2, 1/m) / sqrt(m))
+  end
+  if abs(real(phi)) == pi/2 && m == 1
+    return complex(NaN, NaN)
+  end
+  if real(phi) >= -pi/2 && real(phi) <= pi/2
+    if m == 1 && abs(real(phi)) < pi/2
+      return atanh(sin(phi))
+    end
+    if m == 0
+      return phi
+    end
+    sine = sin(phi)
+    if isinf(sine)
+      error("`sin(phi)` is not finite.");
+    end
+    sine2 = sine * sine
+    cosine2 = 1.0 - sine2
+    oneminusmsine2 = 1.0 - m * sine2
+    return sine * CarlsonRF(cosine2, oneminusmsine2, complex(1.0, 0.0))
+  end
+  if real(phi) > pi/2
+    k = ceil((real(phi)-pi/2) / pi)
+    phi = phi - k * pi
+  else
+    k = -floor((pi/2-real(phi)) / pi)
+    phi = phi - k * pi
+  end
+  return 2*k*ellipticF(pi/2, m) + ellipticF(phi, m)
+end
+
+"""
+    ellipticK(m)
+
+Complete elliptic integral of the first kind.
+
+# Arguments
+- `m`: complex number, the squared modulus
+"""
+function ellipticK(m::Number)
+  return ellipticF(pi/2, m)
 end
 
 end  # module Jacobi

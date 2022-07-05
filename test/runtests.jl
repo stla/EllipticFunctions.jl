@@ -45,3 +45,10 @@ end
     66^3
   )
 end
+
+@testset "A value of ellipticK." begin
+  @test isapprox(
+    ellipticK(0.5),
+    8 * pi^(3/2) / gamma(-1/4)^2
+  )
+end
