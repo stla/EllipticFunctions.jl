@@ -14,6 +14,9 @@ etaDedekind
 lambda
 kleinj
 CarlsonRF
+CarlsonRD
 ellipticF
 ellipticK
+ellipticE
+agm
 ```

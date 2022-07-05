@@ -13,8 +13,11 @@ export etaDedekind
 export lambda
 export kleinj
 export CarlsonRF
+export CarlsonRD
 export ellipticF
 export ellipticK
+export ellipticE
+export agm
 
 function areclose(z1::Number, z2::Number)
   mod_z2 = abs(z2)
@@ -358,7 +361,7 @@ function CarlsonRF(x::Number, y::Number, z::Number)
   dz = typemax(Float64)
   epsilon = 2.0 * eps()
   while dx > epsilon || dy > epsilon || dz > epsilon
-    lambda = sqrt(x)*sqrt(y) + sqrt(y)*sqrt(z) + sqrt(z)*sqrt(x);
+    lambda = sqrt(x)*sqrt(y) + sqrt(y)*sqrt(z) + sqrt(z)*sqrt(x)
     x = (x + lambda) / 4.0
     y = (y + lambda) / 4.0
     z = (z + lambda) / 4.0
@@ -371,6 +374,53 @@ function CarlsonRF(x::Number, y::Number, z::Number)
   E3 = dy*dx*dz
   return (1 - E2/10 + E3/14 + E2*E2/24 - 3*E2*E3/44 - 5*E2*E2*E2/208 +
     3*E3*E3/104 + E2*E2*E3/16) / sqrt(A)
+end
+
+"""
+    CarlsonRD(x, y, z)
+
+Carlson 'RD' integral.
+
+# Arguments
+- `x`,`y`,`z`: complex numbers; at most one of them can be zero
+"""
+function CarlsonRD(x::Number, y::Number, z::Number)
+  local A
+  xzero = x == 0
+  yzero = y == 0
+  zzero = z == 0
+  if xzero + yzero + zzero >= 2
+    ArgumentError("At most one of `x`, `y`, `z` can be 0.")
+  end
+  dx = typemax(Float64)
+  dy = typemax(Float64)
+  dz = typemax(Float64)
+  epsilon = 2.0 * eps()
+  s = complex(0.0, 0.0)
+  fac = complex(1.0, 0.0)
+  while dx > epsilon || dy > epsilon || dz > epsilon
+    lambda = sqrt(x)*sqrt(y) + sqrt(y)*sqrt(z) + sqrt(z)*sqrt(x)
+    s = s + fac/(sqrt(z) * (z + lambda))
+    fac = fac / 4.0
+    x = (x + lambda) / 4.0
+    y = (y + lambda) / 4.0
+    z = (z + lambda) / 4.0
+    A = (x + y + 3*z) / 5.0
+    dx = abs(1.0 - x/A)
+    dy = abs(1.0 - y/A)
+    dz = abs(1.0 - z/A)
+  end
+  E2 = dx * dy + dy * dz + 3 * dz * dz + 2 * dz * dx +
+              dx * dz + 2 * dy * dz
+  E3 = dz * dz * dz + dx * dz * dz + 3 * dx * dy * dz +
+              2 * dy * dz * dz + dy * dz * dz + 2 * dx * dz * dz
+  E4 = dy * dz * dz * dz + dx * dz * dz * dz + dx * dy * dz * dz +
+              2 * dx * dy * dz * dz
+  E5 = dx * dy * dz * dz * dz
+  return 3 * s + fac * (1 - 3 * E2/14 + E3/6 + 9 * E2 * E2/88 - 3 * E4/22 -
+          9 * E2 * E3/52 + 3 * E5/26 - E2 * E2 * E2/16 +
+          3 * E3 * E3/40 + 3 * E2 * E4/20 + 45 * E2 * E2 * E3/272 -
+          9 * (E3 * E4 + E2 * E5)/68) / A / sqrt(A)
 end
 
 """
@@ -430,6 +480,77 @@ Complete elliptic integral of the first kind.
 """
 function ellipticK(m::Number)
   return ellipticF(pi/2, m)
+end
+
+"""
+    ellipticE(phi, m)
+
+Incomplete elliptic integral of the second kind.
+
+# Arguments
+- `phi`: complex number, the amplitude
+- `m`: complex number, the squared modulus
+"""
+function ellipticE(phi::Number, m::Number)
+  local k
+  if phi == 0
+    return complex(0.0, 0.0)
+  end
+  if real(m) == Inf && imag(m) == 0
+    return complex(NaN, NaN)
+  end
+  if real(phi) >= -pi/2 && real(phi) <= pi/2
+    if m == 0
+      return phi
+    end
+    if m == 1
+      return sin(phi)
+    end
+    sine = sin(phi)
+    if isinf(sine)
+      error("`sin(phi)` is not finite.")
+    end
+    sine2 = sine*sine
+    cosine2 = 1.0 - sine2
+    oneminusmsine2 = 1.0 - m * sine2;
+    return sine * (CarlsonRF(cosine2, oneminusmsine2, 1.0) -
+            m * sine2 * CarlsonRD(cosine2, oneminusmsine2, 1.0) / 3)
+  end
+  if real(phi) > pi/2
+    k = ceil((real(phi)-pi/2) / pi)
+    phi = phi - k * pi
+  else
+    k = -floor((pi/2-real(phi)) / pi)
+    phi = phi - k * pi
+  end
+  return 2 * k * ellipticE(pi/2, m) + ellipticE(phi, m)
+end
+
+"""
+    ellipticE(m)
+
+Complete elliptic integral of the second kind.
+
+# Arguments
+- `m`: complex number, the squared modulus
+"""
+function ellipticE(m::Number)
+  return ellipticE(pi/2, m)
+end
+
+"""
+    agm(x, y)
+
+Arithmetic-geometric mean.
+
+# Arguments
+- `x`,`y`: complex numbers
+"""
+function agm(x::Number, y::Number)
+  if x + y == 0 || x == 0 || y == 0
+    return complex(0.0, 0.0)
+  end
+  return pi/4 * (x + y) / ellipticK(((x-y)/(x+y))^2)
 end
 
 end  # module Jacobi
