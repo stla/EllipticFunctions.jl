@@ -66,3 +66,11 @@ end
     2 * pi^(3/2) * sqrt(2) / gamma(1/4)^2
   )
 end
+
+@testset "EisensteinE2 development." begin
+  q = 0.005 + 0.005im
+  @test isapprox(
+    EisensteinE2(q),
+    1 - 24 * (q/(1-q) + 2*q^2/(1-q^2) + 3*q^3/(1-q^3) + 4*q^4/(1-q^4) + 5*q^5/(1-q^5))
+  )
+end

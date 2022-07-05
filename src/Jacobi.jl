@@ -160,7 +160,7 @@ function _EisensteinE2(tau::Number)
   j3 = _jtheta3(0, tau)
   lbd = (_jtheta2(0, tau) / j3)^4
   j3sq = j3^2
-  return 6.0/pi * ellipticE(lbd) * j3sq - j3sq**2 - _jtheta4(0, tau)**4
+  return 6.0/pi * ellipticE(lbd) * j3sq - j3sq^2 - _jtheta4(0, tau)^4
 end
 
 # exports ####
@@ -556,7 +556,7 @@ function EisensteinE2(q::Number)
   return _EisensteinE2(tau)
 end
 
-function jtheta1dash0(tau::Number){
+function jtheta1dash0(tau::Number)
   return exp(_ljtheta2(0.0, tau) + _ljtheta3(0.0, tau) + _ljtheta4(0.0, tau))
 end
 
@@ -564,11 +564,11 @@ function jtheta1dashdashdash0(tau::Number)
   return -2.0 * _etaDedekind(tau)^3 * Eisen2(tau)
 end
 
-function dljtheta1(z::Number, tau::Number) {
+function dljtheta1(z::Number, tau::Number)
   if z == 0
     return jtheta1dash0(tau) / _jtheta1(0.0, tau)
   end
   return _jtheta1dash(z, tau) / _jtheta1(z, tau)
-}
+end
 
 end  # module Jacobi
