@@ -1,4 +1,11 @@
-# Jacobi.jl Documentation
+# Jacobi.jl documentation
+
+Jacobi theta functions and related functions.
+
+```@contents
+```
+
+## Functions
 
 ```@docs
 ljtheta1
@@ -19,4 +26,9 @@ ellipticF
 ellipticK
 ellipticE
 agm
+```
+
+## Index
+
+```@index
 ```
