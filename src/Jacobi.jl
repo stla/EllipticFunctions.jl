@@ -8,8 +8,12 @@ export ljtheta3
 export jtheta3
 export ljtheta4
 export jtheta4
+export jtheta1dash
+export etaDedekind
+export lambda
+export kleinj
 
-function close(z1::Number, z2::Number)
+function areclose(z1::Number, z2::Number)
   mod_z2 = abs(z2)
   maxmod = (mod_z2 < eps()) ? 1.0 : max(abs(z1), mod_z2)
   return abs(z1 - z2) < 2.0 * eps() * maxmod
@@ -29,7 +33,7 @@ function calctheta3(z::Number, tau::Number, passes::Int64)
       exp(n * 1im * pi * (n * tau + 2 * z)) +
       exp(n * 1im * pi * (n * tau - 2 * z))
     out += qweight
-    if n >= 3 && close(out + qweight, out)
+    if n >= 3 && areclose(out + qweight, out)
       return log(out)
     end
   end
@@ -71,7 +75,7 @@ function dologtheta3(z::Number, tau::Number, passin::Int64)
   if abs(tau2) < 0.98 && imag(tau2) < 0.98
     tauprime = -1.0 / tau2
     out =
-      1i * pi * tauprime * z * z +
+      1im * pi * tauprime * z * z +
       dologtheta3(-z * tauprime, tauprime, passes) - log(sqrt(-1im * tau2))
   elseif rl >= 0.6
     out = dologtheta3(z + 0.5, tau2 - 1.0, passes)
@@ -84,11 +88,11 @@ function dologtheta3(z::Number, tau::Number, passin::Int64)
 end
 
 function M(z::Number, tau::Number)
-    return 1im * (z + pi * tau / 4.0)
+  return 1im * (z + pi * tau / 4.0)
 end
 
 function _ljtheta2(z::Number, tau::Number)
-  return M(z, tau) + dologtheta3(z/pi + 0.5 * tau, tau, 0)
+  return M(z, tau) + dologtheta3(z / pi + 0.5 * tau, tau, 0)
 end
 
 function _jtheta2(z::Number, tau::Number)
@@ -96,7 +100,7 @@ function _jtheta2(z::Number, tau::Number)
 end
 
 function _ljtheta1(z::Number, tau::Number)
-    return _ljtheta2(z - pi/2, tau)
+  return _ljtheta2(z - pi / 2, tau)
 end
 
 function _jtheta1(z::Number, tau::Number)
@@ -104,7 +108,7 @@ function _jtheta1(z::Number, tau::Number)
 end
 
 function _ljtheta3(z::Number, tau::Number)
-  return dologtheta3(z/pi, tau, 0)
+  return dologtheta3(z / pi, tau, 0)
 end
 
 function _jtheta3(z::Number, tau::Number)
@@ -112,11 +116,27 @@ function _jtheta3(z::Number, tau::Number)
 end
 
 function _ljtheta4(z::Number, tau::Number)
-  return _ljtheta3(z + pi/2, tau)
+  return _ljtheta3(z + pi / 2, tau)
 end
 
 function _jtheta4(z::Number, tau::Number)
   return exp(_ljtheta4(z, tau))
+end
+
+function _jtheta1dash(z::Number, tau::Number)
+  q = exp(1im * pi * tau)
+  out = complex(0.0, 0.0)
+  alt = -1.0
+  for n = 0:2000
+    alt = -alt
+    k = 2.0 * n + 1.0
+    outnew = out + alt * q^(n * (n + 1)) * k * cos(k * z)
+    if areclose(out, outnew)
+      return 2 * q^0.25 * out
+    end
+    out = outnew
+  end
+  error("Reached 2000 iterations.")
 end
 
 # exports ####
@@ -131,10 +151,10 @@ Logarithm of the first Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function ljtheta1(z::Number, tau::Number)
-    if imag(tau) <= 0
-        ArgumentError("Invalid tau.")
-    end
-    return _ljtheta1(z, tau)
+  if imag(tau) <= 0
+    ArgumentError("Invalid `tau`.")
+  end
+  return _ljtheta1(z, tau)
 end
 
 """
@@ -147,10 +167,10 @@ First Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function jtheta1(z::Number, tau::Number)
-    if imag(tau) <= 0
-        ArgumentError("Invalid tau.")
-    end
-    return _jtheta1(z, tau)
+  if imag(tau) <= 0
+    ArgumentError("Invalid `tau`.")
+  end
+  return _jtheta1(z, tau)
 end
 
 """
@@ -163,10 +183,10 @@ Logarithm of the second Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function ljtheta2(z::Number, tau::Number)
-    if imag(tau) <= 0
-        ArgumentError("Invalid tau.")
-    end
-    return _ljtheta2(z, tau)
+  if imag(tau) <= 0
+    ArgumentError("Invalid `tau`.")
+  end
+  return _ljtheta2(z, tau)
 end
 
 """
@@ -179,10 +199,10 @@ Second Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function jtheta2(z::Number, tau::Number)
-    if imag(tau) <= 0
-        ArgumentError("Invalid tau.")
-    end
-    return _jtheta2(z, tau)
+  if imag(tau) <= 0
+    ArgumentError("Invalid `tau`.")
+  end
+  return _jtheta2(z, tau)
 end
 
 """
@@ -195,10 +215,10 @@ Logarithm of the third Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function ljtheta3(z::Number, tau::Number)
-    if imag(tau) <= 0
-        ArgumentError("Invalid tau.")
-    end
-    return _ljtheta3(z, tau)
+  if imag(tau) <= 0
+    ArgumentError("Invalid `tau`.")
+  end
+  return _ljtheta3(z, tau)
 end
 
 """
@@ -211,10 +231,10 @@ Third Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function jtheta3(z::Number, tau::Number)
-    if imag(tau) <= 0
-        ArgumentError("Invalid tau.")
-    end
-    return _jtheta3(z, tau)
+  if imag(tau) <= 0
+    ArgumentError("Invalid `tau`.")
+  end
+  return _jtheta3(z, tau)
 end
 
 """
@@ -227,10 +247,10 @@ Logarithm of the fourth Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function ljtheta4(z::Number, tau::Number)
-    if imag(tau) <= 0
-        ArgumentError("Invalid tau.")
-    end
-    return _ljtheta4(z, tau)
+  if imag(tau) <= 0
+    ArgumentError("Invalid `tau`.")
+  end
+  return _ljtheta4(z, tau)
 end
 
 """
@@ -243,10 +263,75 @@ Fourth Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function jtheta4(z::Number, tau::Number)
-    if imag(tau) <= 0
-        ArgumentError("Invalid tau.")
-    end
-    return _jtheta4(z, tau)
+  if imag(tau) <= 0
+    ArgumentError("Invalid `tau`.")
+  end
+  return _jtheta4(z, tau)
+end
+
+"""
+    jtheta1dash(z, tau)
+
+Derivative of the first Jacobi theta function.
+
+# Arguments
+- `z`: complex number
+- `tau`: complex number with nonnegative imaginary part
+"""
+function jtheta1dash(z::Number, tau::Number)
+  if imag(tau) <= 0
+    ArgumentError("Invalid `tau`.")
+  end
+  return _jtheta1dash(z, tau)
+end
+
+"""
+    etaDedekind(tau)
+
+Dedekind eta function.
+
+# Arguments
+- `tau`: complex number with nonnegative imaginary part
+"""
+function etaDedekind(tau::Number)
+  if imag(tau) <= 0
+    ArgumentError("Invalid `tau`.")
+  end
+  return exp(
+    1im * pi * tau / 12.0 + dologtheta3((tau + 1.0) / 2.0, 3.0 * tau, 0)
+  )
+end
+
+"""
+    lambda(tau)
+
+Lambda modular function.
+
+# Arguments
+- `tau`: complex number with nonnegative imaginary part
+"""
+function lambda(tau::Number)
+  if imag(tau) <= 0
+    ArgumentError("Invalid `tau`.")
+  end
+  return (_jtheta2(0, tau) / _jtheta3(0, tau))^4
+end
+
+"""
+    kleinj(tau)
+
+Klein j-invariant function.
+
+# Arguments
+- `tau`: complex number with nonnegative imaginary part
+"""
+function kleinj(tau::Number)
+  if imag(tau) <= 0
+    ArgumentError("Invalid `tau`.")
+  end
+  lbd = (_jtheta2(0, tau) / _jtheta3(0, tau))^4
+  x = lbd * (1.0 - lbd)
+  return 256 * (1-x)^3 / x^2
 end
 
 end  # module Jacobi
