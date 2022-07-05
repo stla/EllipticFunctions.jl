@@ -96,3 +96,13 @@ end
     exp(pi/8) * 2^(1/4)
   )
 end
+
+@testset "A value of wzeta." begin
+  omega1 = gamma(1/4)^2 / 4 / sqrt(pi)
+  omega2 = 1im * omega1
+  omega = (omega1, omega2)
+  @test isapprox(
+    wzeta(omega1; omega = omega),
+    pi / 4 / omega1
+  )
+end
