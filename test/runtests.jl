@@ -52,3 +52,10 @@ end
     8 * pi^(3/2) / gamma(-1/4)^2
   )
 end
+
+@testset "A value of ellipticE." begin
+  @test isapprox(
+    ellipticE(0.5),
+    (2 * gamma(3/4)^4 + pi^2) / (4 * sqrt(pi) * gamma(3/4)^2)
+  )
+end
