@@ -74,3 +74,15 @@ end
     1 - 24 * (q/(1-q) + 2*q^2/(1-q^2) + 3*q^3/(1-q^3) + 4*q^4/(1-q^4) + 5*q^5/(1-q^5))
   )
 end
+
+@testset "Sum of the e_i is zero." begin
+  omega1 = 1.4 - 1im
+  omega2 = 1.6 + 0.5im
+  omega = (omega1, omega2)
+  e1 = wp(omega1; omega = omega)
+  e2 = wp(omega2; omega = omega)
+  e3 = wp(-omega1-omega2; omega = omega)
+  @test isapprox(
+    e1 + e2 + e3, 0; atol = 1e-10
+  )
+end

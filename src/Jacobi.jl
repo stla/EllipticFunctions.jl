@@ -19,6 +19,7 @@ export ellipticK
 export ellipticE
 export agm
 export EisensteinE2
+export wp
 
 function areclose(z1::Number, z2::Number)
   mod_z2 = abs(z2)
@@ -130,6 +131,18 @@ function _jtheta4(z::Number, tau::Number)
   return exp(_ljtheta4(z, tau))
 end
 
+function M_raw(z::Number, tau::Number)
+  return 1im * pi * (z + tau / 4.0)
+end
+
+function _jtheta1_raw(z::Number, tau::Number)
+  return exp(M_raw(z - 0.5, tau) + dologtheta3(z - 0.5 + 0.5 * tau, tau, 0))
+end
+
+function _jtheta4_raw(z::Number, tau::Number)
+  return exp(dologtheta3(z + 0.5, tau, 0))
+end
+
 function _jtheta1dash(z::Number, tau::Number)
   q = exp(1im * pi * tau)
   out = complex(0.0, 0.0)
@@ -161,6 +174,30 @@ function _EisensteinE2(tau::Number)
   lbd = (_jtheta2(0, tau) / j3)^4
   j3sq = j3^2
   return 6.0/pi * ellipticE(lbd) * j3sq - j3sq^2 - _jtheta4(0, tau)^4
+end
+
+function _jtheta1dash0(tau::Number)
+  return exp(_ljtheta2(0.0, tau) + _ljtheta3(0.0, tau) + _ljtheta4(0.0, tau))
+end
+
+function _jtheta1dashdashdash0(tau::Number)
+  return -2.0 * _etaDedekind(tau)^3 * Eisen2(tau)
+end
+
+function _dljtheta1(z::Number, tau::Number)
+  if z == 0
+    return _jtheta1dash0(tau) / _jtheta1(0.0, tau)
+  end
+  return _jtheta1dash(z, tau) / _jtheta1(z, tau)
+end
+
+
+function _wpFromTau(z::Number, tau::Number)
+  j2 = _jtheta2(0, tau)
+  j3 = _jtheta3(0, tau)
+  j1 = _jtheta1_raw(z, tau)
+  j4 = _jtheta4_raw(z, tau)
+  return (pi * j2 * j3 * j4 / j1)^2 - pi^2 * (j2^4 + j3^4) / 3.0
 end
 
 # exports ####
@@ -556,19 +593,29 @@ function EisensteinE2(q::Number)
   return _EisensteinE2(tau)
 end
 
-function jtheta1dash0(tau::Number)
-  return exp(_ljtheta2(0.0, tau) + _ljtheta3(0.0, tau) + _ljtheta4(0.0, tau))
-end
+"""
+    wp(z; tau, omega)
 
-function jtheta1dashdashdash0(tau::Number)
-  return -2.0 * _etaDedekind(tau)^3 * Eisen2(tau)
-end
+Weierstrass p-function.
 
-function dljtheta1(z::Number, tau::Number)
-  if z == 0
-    return jtheta1dash0(tau) / _jtheta1(0.0, tau)
+# Arguments
+- `z`: complex number or vector of complex numbers
+- `tau`: half-periods ratio, complex number with non negative imaginary part
+- `omega`: half-periods, a pair of complex numbers; exactly one of `tau` or `omega` must be given
+"""
+function wp(z::Union{N,Vector{N}}; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing) where N<:Number
+  nmissing = ismissing(tau) + ismissing(omega)
+  @assert nmissing == 1 "You must supply either `tau` or `omega`."
+  if !ismissing(tau)
+    @assert imag(tau) > 0 "Invalid `tau`."
+    return _wpFromTau.(z, tau)
   end
-  return _jtheta1dash(z, tau) / _jtheta1(z, tau)
+  if !ismissing(omega)
+    tau = omega[2]/omega[1]
+    @assert imag(tau) > 0 "Invalid `omega`."
+    return _wpFromTau(z/omega[1]/2, tau) / omega[1] / omega[1] / 4
+  end
 end
+
 
 end  # module Jacobi
