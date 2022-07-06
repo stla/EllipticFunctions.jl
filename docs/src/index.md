@@ -70,6 +70,11 @@ EisensteinE4
 wp
 wsigma
 wzeta
+thetaC
+thetaD
+thetaN
+thetaS
+jellip
 ```
 
 ## Index

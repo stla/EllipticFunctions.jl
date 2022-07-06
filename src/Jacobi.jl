@@ -24,6 +24,11 @@ export EisensteinE4
 export wp
 export wsigma
 export wzeta
+export thetaC
+export thetaD
+export thetaN
+export thetaS
+export jellip
 
 function xcispi(x)
     return exp(1im * pi * x)
@@ -246,6 +251,45 @@ function _wpDerivative(z, omega1::Number, tau::Number)
   2/(w1*w1*w1) * j2 .* j3 .* j4 .* f
 end
 
+function _thetaS(z, tau::Number)
+  j3sq = _jtheta3_raw(0, tau)^2
+  zprime = z / j3sq / pi
+  return j3sq * _jtheta1_raw.(zprime, tau) / _jtheta1dash0(tau)
+end
+
+function _thetaC(z, tau::Number)
+  zprime = z / _jtheta3_raw(0, tau)^2 / pi
+  return _jtheta2_raw.(zprime, tau) / _jtheta2_raw(0, tau)
+end
+
+function _thetaN(z, tau::Number)
+  zprime = z / _jtheta3_raw(0, tau)^2 / pi
+  return _jtheta4_raw.(zprime, tau) / _jtheta4_raw(0, tau)
+end
+
+function _thetaD(z, tau::Number)
+  j3 = _jtheta3_raw(0, tau)
+  zprime = z / j3^2 / pi
+  return _jtheta3_raw.(zprime, tau) / j3
+end
+
+function _tau_from_m(m::Number)
+  1im * ellipticK(1.0 - m) / ellipticK(m)
+end
+
+function _check_and_get_tau_from_m(tau::Union{Missing,Number}, m::Union{Missing,Number})
+  nmissing = ismissing(tau) + ismissing(m)
+  @assert nmissing == 1 ArgumentError("You must supply either `tau` or `m`.")
+  if !ismissing(tau)
+    @assert imag(tau) > 0 ArgumentError("The imaginary part of `tau` must be nonnegative.")
+  else
+    tau = _tau_from_m(m)
+    @assert imag(tau) > 0 ArgumentError("Invalid value of `m`.")
+  end
+  return tau
+end
+
+
 # exports ####
 
 """
@@ -254,11 +298,11 @@ end
 Logarithm of the first Jacobi theta function.
 
 # Arguments
-- `z`: complex number or vector of complex numbers
+- `z`: complex number or vector/array of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function ljtheta1(z::Union{N,Vector{N}}, tau::Number) where N<:Number
-  @assert imag(tau) > 0 "Invalid `tau`."
+function ljtheta1(z, tau::Number)
+  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
   return _ljtheta1.(z, tau)
 end
 
@@ -794,7 +838,7 @@ Weierstrass zeta-function. One and only one of the parameters `tau`, `omega` or 
 function wzeta(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing, g::Union{Missing,Tuple{Number,Number}}=missing)
   local omega1, omega2
   nmissing = ismissing(tau) + ismissing(omega) + ismissing(g)
-  @assert nmissing == 2 "You must supply either `tau`, `omega` or `g`."
+  @assert nmissing == 2 ArgumentError("You must supply either `tau`, `omega` or `g`.")
   if !ismissing(tau) || !ismissing(omega)
     if !ismissing(tau)
       @assert imag(tau) > 0 "Invalid `tau`."
@@ -827,6 +871,106 @@ function wzeta(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple
   p = 1.0 / w1 / 2.0
   eta1 = p / 6.0 / w1 * _jtheta1dashdashdash0(tau) / _jtheta1dash0(tau)
   return - eta1 * z + p * _dljtheta1.(p * z, tau)
+end
+
+"""
+    thetaS(z, tau)
+
+Neville S-theta function. Only one of the parameters `tau` or `m` must be supplied.
+
+# Arguments
+- `z`: complex number or vector/array of complex numbers
+- `tau`: complex number with nonnegative imaginary part
+- `m`: complex number, square of the elliptic modulus
+"""
+function thetaS(z; tau::Union{Missing,Number}=missing, m::Union{Missing,Number}=missing)
+  tau = _check_and_get_tau_from_m(tau, m)
+  return _thetaS(z, tau)
+end
+
+"""
+    thetaC(z, tau)
+
+Neville C-theta function. Only one of the parameters `tau` or `m` must be supplied.
+
+# Arguments
+- `z`: complex number or vector/array of complex numbers
+- `tau`: complex number with nonnegative imaginary part
+- `m`: complex number, square of the elliptic modulus
+"""
+function thetaC(z; tau::Union{Missing,Number}=missing, m::Union{Missing,Number}=missing)
+  tau = _check_and_get_tau_from_m(tau, m)
+  return _thetaC(z, tau)
+end
+
+"""
+    thetaD(z, tau)
+
+Neville D-theta function. Only one of the parameters `tau` or `m` must be supplied.
+
+# Arguments
+- `z`: complex number or vector/array of complex numbers
+- `tau`: complex number with nonnegative imaginary part
+- `m`: complex number, square of the elliptic modulus
+"""
+function thetaD(z; tau::Union{Missing,Number}=missing, m::Union{Missing,Number}=missing)
+  tau = _check_and_get_tau_from_m(tau, m)
+  return _thetaD(z, tau)
+end
+
+"""
+    thetaN(z, tau)
+
+Neville N-theta function. Only one of the parameters `tau` or `m` must be supplied.
+
+# Arguments
+- `z`: complex number or vector/array of complex numbers
+- `tau`: complex number with nonnegative imaginary part
+- `m`: complex number, square of the elliptic modulus
+"""
+function thetaN(z; tau::Union{Missing,Number}=missing, m::Union{Missing,Number}=missing)
+  tau = _check_and_get_tau_from_m(tau, m)
+  return _thetaN(z, tau)
+end
+
+"""
+    jellip(kind, u; tau, m)
+
+Jacobi elliptic functions. Only one of the parameters `tau` or `m` must be supplied.
+
+# Arguments
+- `kind`: a string with two characters among 'c', 'd', 'n' or 's'; this string specifies the function: the two letters respectively denote the basic functions `sn`, `cn`, `dn` and `1`, and the string specifies the ratio of two such functions, e.g. `ns=1/sn` and `cd=cn/dn`
+- `u`: complex number or vector/array of complex numbers
+- `tau`: complex number with nonnegative imaginary part
+- `m`: complex number, square of the elliptic modulus
+"""
+function jellip(kind::String, u; tau::Union{Missing,Number}=missing, m::Union{Missing,Number}=missing)
+  local num, den
+  @assert length(kind) == 2 ArgumentError("The string `kind` must contain two characters.")
+  f1 = kind[1]
+  f2 = kind[2]
+  @assert f1 == 'c' || f1 == 'd'  || f1 == 'n'  || f1 == 's' ArgumentError("Invalid string `kind`.")
+  @assert f2 == 'c' || f2 == 'd'  || f2 == 'n'  || f2 == 's' ArgumentError("Invalid string `kind`.")
+  tau = _check_and_get_tau_from_m(tau, m)
+  if f1 == 'c'
+      num = _thetaC(u, tau)
+  elseif f1 == 'd'
+      num = _thetaD(u, tau)
+  elseif f1 == 'n'
+      num = _thetaN(u, tau)
+  else
+      num = _thetaS(u, tau)
+  end
+  if f2 == 'c'
+      den = _thetaC(u, tau)
+  elseif f2 == 'd'
+      den = _thetaD(u, tau)
+  elseif f2 == 'n'
+      den = _thetaN(u, tau)
+  else
+      den = _thetaS(u, tau)
+  end
+  return num ./ den
 end
 
 end  # module Jacobi
