@@ -67,6 +67,14 @@ end
   )
 end
 
+@testset "kleinjinv works." begin
+  j = 0.1 + 0.2im
+  @test isapprox(
+    kleinj(kleinjinv(j)),
+    j
+  )
+end
+
 @testset "EisensteinE2 development." begin
   q = 0.005 + 0.005im
   @test isapprox(
@@ -87,6 +95,19 @@ end
   )
 end
 
+@testset "Differential equation wp." begin
+  g2 = 1.4 - 1im
+  g3 = 1.6 + 0.5im
+  g = (g2, g3)
+  z = 1 + 1im
+  p = wp(z; g = g)
+  pdash = wp(z; g = g, derivative = 1)
+  @test isapprox(
+    pdash^2,
+    4 * p^3 - g2 * p - g3
+  )
+end
+
 @testset "A value of wsigma." begin
   omega1 = gamma(1/4)^2 / 4 / sqrt(pi)
   omega2 = 1im * omega1
@@ -97,12 +118,20 @@ end
   )
 end
 
-@testset "A value of wzeta." begin
+@testset "A value of wzeta given omega." begin
   omega1 = gamma(1/4)^2 / 4 / sqrt(pi)
   omega2 = 1im * omega1
   omega = (omega1, omega2)
   @test isapprox(
     wzeta(omega1; omega = omega),
     pi / 4 / omega1
+  )
+end
+
+@testset "A value of wzeta given g." begin
+  g = (5 + 3im, 5 + 3im)
+  @test isapprox(
+    wzeta(1 + 1im; g = g),
+    0.802084165492408 - 0.381791358666872im
   )
 end

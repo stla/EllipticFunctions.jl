@@ -12,6 +12,7 @@ export jtheta1dash
 export etaDedekind
 export lambda
 export kleinj
+export kleinjinv
 export CarlsonRF
 export CarlsonRD
 export ellipticF
@@ -19,6 +20,7 @@ export ellipticK
 export ellipticE
 export agm
 export EisensteinE2
+export EisensteinE4
 export wp
 export wsigma
 export wzeta
@@ -31,13 +33,13 @@ function areclose(z1::Number, z2::Number)
   eps2 = eps()^2
   mod2_z2 = abs2(z2)
   maxmod2 = (mod2_z2 < eps2) ? 1.0 : max(abs2(z1), mod2_z2)
-  return abs2(z1 - z2) < 2.0 * eps2 * maxmod2
+  return abs2(z1 - z2) < 4.0 * eps2 * maxmod2
 end
 
 function calctheta3(z::Number, tau::Number, passes::Int64)
   out = complex(1.0, 0.0)
   n = 0
-  while n < 2000
+  while n < 3000
     n += 1
     qweight =
       xcispi(n * (n * tau + 2 * z)) +
@@ -47,14 +49,14 @@ function calctheta3(z::Number, tau::Number, passes::Int64)
       return log(out)
     end
   end
-  error("Reached 2000 iterations.")
+  error("Reached 3000 iterations.")
 end
 
 function argtheta3(z::Number, tau::Number, passin::Int64)
   local out
   passes = passin + 1
-  if passes > 2000
-    error("Reached 2000 iterations.")
+  if passes > 3000
+    error("Reached 3000 iterations.")
   end
   zimg = imag(z)
   h = imag(tau) / 2
@@ -73,8 +75,8 @@ end
 function dologtheta3(z::Number, tau::Number, passin::Int64)
   local tau2, out
   passes = passin + 1
-  if passes > 2000
-    error("Reached 2000 iterations.")
+  if passes > 3000
+    error("Reached 3000 iterations.")
   end
   rl = real(tau)
   if rl >= 0
@@ -141,6 +143,14 @@ function _jtheta1_raw(z::Number, tau::Number)
   return expM_raw(z - 0.5, tau) * exp(dologtheta3(z - 0.5 + 0.5 * tau, tau, 0))
 end
 
+function _jtheta2_raw(z::Number, tau::Number)
+  return expM_raw(z, tau) * exp(dologtheta3(z + 0.5 * tau, tau, 0))
+end
+
+function _jtheta3_raw(z::Number, tau::Number)
+  return exp(dologtheta3(z, tau, 0))
+end
+
 function _jtheta4_raw(z::Number, tau::Number)
   return exp(dologtheta3(z + 0.5, tau, 0))
 end
@@ -149,7 +159,7 @@ function _jtheta1dash(z::Number, tau::Number)
   q = xcispi(tau)
   out = complex(0.0, 0.0)
   alt = -1.0
-  for n = 0:2000
+  for n = 0:3000
     alt = -alt
     k = 2.0 * n + 1.0
     outnew = out + alt * q^(n * (n + 1)) * k * cos(k * z)
@@ -158,11 +168,13 @@ function _jtheta1dash(z::Number, tau::Number)
     end
     out = outnew
   end
-  error("Reached 2000 iterations.")
+  error("Reached 3000 iterations.")
 end
 
 function _etaDedekind(tau::Number)
-  return xcispi(tau / 12.0) * exp(dologtheta3((tau + 1.0) / 2.0, 3.0 * tau, 0))
+  return xcispi(-1 / tau / 12.0) *
+    exp(dologtheta3((-1 / tau + 1.0) / 2.0, -3.0 / tau, 0)) /
+    sqrt(-1im * tau)
 end
 
 function isvector(x)
@@ -191,13 +203,47 @@ function _dljtheta1(z::Number, tau::Number)
   return _jtheta1dash(z, tau) / _jtheta1(z, tau)
 end
 
+function _E4(tau::Number)
+  return (_jtheta2(0, tau)^8 + _jtheta3(0, tau)^8 + _jtheta4(0, tau)^8) / 2.0
+end
 
-function _wpFromTau(z::Number, tau::Number)
+function _omega1_and_tau(g)
+  g2, g3 = g
+  g2cube = g2*g2*g2
+  j = 1728 * g2cube / (g2cube - 27*g3*g3)
+  if isinf(j)
+    return (-1im*pi/2/sqrt(3), complex(Inf, Inf))
+  end
+  tau = kleinjinv(j)
+  omega1 = 1im * pi * sqrt(sqrt(1.0 / g2 / 12 * _E4(tau)))
+  return (omega1, tau)
+end
+
+function _g2_from_omega1_and_tau(omega1::Number, tau::Number)
+  j2 = _jtheta2_raw(0, tau)
+  j3 = _jtheta3_raw(0, tau)
+  return 4/3 * (pi/2/omega1)^4 * (j2^8 - (j2*j3)^4 + j3^8)
+end
+
+function _wpFromTau(z, tau::Number)
   j2 = _jtheta2(0, tau)
   j3 = _jtheta3(0, tau)
-  j1 = _jtheta1_raw(z, tau)
-  j4 = _jtheta4_raw(z, tau)
-  return (pi * j2 * j3 * j4 / j1)^2 - pi^2 * (j2^4 + j3^4) / 3.0
+  j1 = _jtheta1_raw.(z, tau)
+  j4 = _jtheta4_raw.(z, tau)
+  return (pi * j2 * j3 * j4 ./ j1)^2 .- (pi^2 * (j2^4 + j3^4) / 3.0)
+end
+
+function _wpDerivative(z, omega1::Number, tau::Number)
+  w1 = 2 * omega1 / pi
+  z1 = - z / 2 / omega1
+  j1 = _jtheta1_raw.(z1, tau)
+  j2 = _jtheta2_raw.(z1, tau)
+  j3 = _jtheta3_raw.(z1, tau)
+  j4 = _jtheta4_raw.(z1, tau)
+  f = _jtheta1dash0(tau)^3 /
+    (_jtheta2_raw(0, tau) * _jtheta3_raw(0, tau) *
+       _jtheta4_raw(0, tau) * j1.^3)
+  2/(w1*w1*w1) * j2 .* j3 .* j4 .* f
 end
 
 # exports ####
@@ -222,10 +268,10 @@ end
 First Jacobi theta function.
 
 # Arguments
-- `z`: complex number or vector of complex numbers
+- `z`: complex number or vector/array of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function jtheta1(z::Union{N,Vector{N}}, tau::Number) where N<:Number
+function jtheta1(z, tau::Number)
   @assert imag(tau) > 0 "Invalid `tau`."
   return _jtheta1.(z, tau)
 end
@@ -236,10 +282,10 @@ end
 Logarithm of the second Jacobi theta function.
 
 # Arguments
-- `z`: complex number or vector of complex numbers
+- `z`: complex number or vector/array of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function ljtheta2(z::Union{N,Vector{N}}, tau::Number) where N<:Number
+function ljtheta2(z, tau::Number)
   @assert imag(tau) > 0 "Invalid `tau`."
   return _ljtheta2.(z, tau)
 end
@@ -250,10 +296,10 @@ end
 Second Jacobi theta function.
 
 # Arguments
-- `z`: complex number or vector of complex numbers
+- `z`: complex number or vector/array of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function jtheta2(z::Union{N,Vector{N}}, tau::Number) where N<:Number
+function jtheta2(z, tau::Number)
   @assert imag(tau) > 0 "Invalid `tau`."
   return _jtheta2.(z, tau)
 end
@@ -264,10 +310,10 @@ end
 Logarithm of the third Jacobi theta function.
 
 # Arguments
-- `z`: complex number or vector of complex numbers
+- `z`: complex number or vector/array of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function ljtheta3(z::Union{N,Vector{N}}, tau::Number) where N<:Number
+function ljtheta3(z, tau::Number)
   @assert imag(tau) > 0 "Invalid `tau`."
   return _ljtheta3.(z, tau)
 end
@@ -278,10 +324,10 @@ end
 Third Jacobi theta function.
 
 # Arguments
-- `z`: complex number or vector of complex numbers
+- `z`: complex number or vector/array of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function jtheta3(z::Union{N,Vector{N}}, tau::Number) where N<:Number
+function jtheta3(z, tau::Number)
   @assert imag(tau) > 0 "Invalid `tau`."
   return _jtheta3.(z, tau)
 end
@@ -292,10 +338,10 @@ end
 Logarithm of the fourth Jacobi theta function.
 
 # Arguments
-- `z`: complex number or vector of complex numbers
+- `z`: complex number or vector/array of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function ljtheta4(z::Union{N,Vector{N}}, tau::Number) where N<:Number
+function ljtheta4(z, tau::Number)
   @assert imag(tau) > 0 "Invalid `tau`."
   return _ljtheta4.(z, tau)
 end
@@ -306,10 +352,10 @@ end
 Fourth Jacobi theta function.
 
 # Arguments
-- `z`: complex number or vector of complex numbers
+- `z`: complex number or vector/array of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function jtheta4(z::Union{N,Vector{N}}, tau::Number) where N<:Number
+function jtheta4(z, tau::Number)
   @assert imag(tau) > 0 "Invalid `tau`."
   return _jtheta4.(z, tau)
 end
@@ -320,12 +366,12 @@ end
 Derivative of the first Jacobi theta function.
 
 # Arguments
-- `z`: complex number
+- `z`: complex number or vector/array of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function jtheta1dash(z::Number, tau::Number)
+function jtheta1dash(z, tau::Number)
   @assert imag(tau) > 0 "Invalid `tau`."
-  return _jtheta1dash(z, tau)
+  return _jtheta1dash.(z, tau)
 end
 
 """
@@ -584,6 +630,29 @@ function agm(x::Number, y::Number)
 end
 
 """
+    kleinjinv(j)
+
+Inverse of the Klein j-invariant function.
+
+# Arguments
+- `j`: complex number
+"""
+function kleinjinv(j::Number)
+  local x
+  if isinf(j)
+    x = complex(0.0, 0.0)
+  else
+    j2 = j * j
+    j3 = j2 * j
+    t = (-j3 + 2304 * j2 + 12288 *
+          sqrt(3 * (1728 * j2 - j3)) - 884736 * j)^(1/3)
+    x = 1/768 * t - (1536 * j - j2) / (768 * t) + (1 - j/768)
+  end
+  lbd = -(-1 - sqrt(1 - 4*x)) / 2
+  return 1im * agm(1, sqrt(1-lbd)) / agm(1, sqrt(lbd))
+end
+
+"""
     EisensteinE2(q)
 
 Eisenstein E-series of weight 2.
@@ -599,43 +668,101 @@ function EisensteinE2(q::Number)
 end
 
 """
-    wp(z; tau, omega)
+    EisensteinE4(q)
 
-Weierstrass p-function.
+Eisenstein E-series of weight 4.
 
 # Arguments
-- `z`: complex number or vector of complex numbers
-- `tau`: half-periods ratio, complex number with non negative imaginary part
-- `omega`: half-periods, a pair of complex numbers; exactly one of `tau` or `omega` must be given
+- `q`: nome, complex number; it must not be a negative real number and its modulus must be strictly smaller than 1
 """
-function wp(z::Union{N,Vector{N}}; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing) where N<:Number
-  nmissing = ismissing(tau) + ismissing(omega)
-  @assert nmissing == 1 "You must supply either `tau` or `omega`."
+function EisensteinE4(q::Number)
+  @assert abs(q) < 1 "Invalid `q`."
+  @assert imag(q) != 0 || real(q) > 0 "Invalid `q`."
+  tau = -1im * log(q) / pi / 2.0
+  return (_jtheta2(0, tau)^8 + _jtheta3(0, tau)^8 + _jtheta4(0, tau)^8) / 2.0
+end
+
+"""
+    wp(z; tau, omega)
+
+Weierstrass p-function. One and only one of the parameters `tau`, `omega` or `g` must be given.
+
+# Arguments
+- `z`: complex number or vector/array of complex numbers
+- `tau`: half-periods ratio, complex number with non negative imaginary part
+- `omega`: half-periods, a pair of complex numbers
+- `g`: elliptic invariants, a pair of complex numbers
+- `derivative`: order of differentiation, 0, 1, 2 or 3
+"""
+function wp(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing, g::Union{Missing,Tuple{Number,Number}}=missing, derivative::Int64=0)
+  local omega1, weier, weierPrime
+  @assert derivative >= 0 && derivative <= 3 ArgumentError("`derivative` must be beetween 0 and 3.")
+  nmissing = ismissing(tau) + ismissing(omega) + ismissing(g)
+  @assert nmissing == 2 ArgumentError("You must supply either `tau`, `omega` or `g`.")
   if !ismissing(tau)
     @assert imag(tau) > 0 "Invalid `tau`."
-    return _wpFromTau.(z, tau)
+    if derivative != 1
+      weier = _wpFromTau(z, tau)
+      if derivative == 0
+        return weier
+      end
+      if derivative == 2
+        g2 = _g2_from_omega1_and_tau(omega1, tau)
+        return 6 * weier * weier .- g2/2
+      end
+    end
+    omega1 = 0.5
   end
   if !ismissing(omega)
-    tau = omega[2]/omega[1]
+    omega1, omega2 = omega
+    tau = omega2/omega1
     @assert imag(tau) > 0 "Invalid `omega`."
-    return _wpFromTau(z/omega[1]/2, tau) / omega[1] / omega[1] / 4
+    if derivative != 1
+      weier = _wpFromTau(z/omega1/2, tau) / omega1 / omega1 / 4
+      if derivative == 0
+        return weier
+      end
+      if derivative == 2
+        g2 = _g2_from_omega1_and_tau(omega1, tau)
+        return 6 * weier * weier .- g2/2
+      end
+    end
   end
+  if !ismissing(g)
+    omega1, tau = _omega1_and_tau(g)
+    if derivative != 1
+      weier = _wpFromTau(z/omega1/2, tau) / omega1 / omega1 / 4
+      if derivative == 0
+        return weier
+      end
+      if derivative == 2
+        g2, g3 = g
+        return 6 * weier * weier .- g2/2
+      end
+    end
+  end
+  weierPrime = _wpDerivative(z, omega1, tau)
+  if derivative == 1
+    return weierPrime
+  end
+  return 12 * weier * weierPrime # derivative = 3
 end
 
 """
     wsigma(z; tau, omega)
 
-Weierstrass sigma-function.
+Weierstrass sigma-function. One and only one of the parameters `tau`, `omega` or `g` must be given.
 
 # Arguments
-- `z`: complex number or vector of complex numbers
+- `z`: complex number or vector/array of complex numbers
 - `tau`: half-periods ratio, complex number with non negative imaginary part
-- `omega`: half-periods, a pair of complex numbers; exactly one of `tau` or `omega` must be given
+- `omega`: half-periods, a pair of complex numbers
+- `g`: elliptic invariants, a pair of complex numbers
 """
-function wsigma(z::Union{N,Vector{N}}; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing) where N<:Number
+function wsigma(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing, g::Union{Missing,Tuple{Number,Number}}=missing)
   local omega1
-  nmissing = ismissing(tau) + ismissing(omega)
-  @assert nmissing == 1 "You must supply either `tau` or `omega`."
+  nmissing = ismissing(tau) + ismissing(omega) + ismissing(g)
+  @assert nmissing == 2 ArgumentError("You must supply either `tau`, `omega` or `g`.")
   if !ismissing(tau)
     @assert imag(tau) > 0 "Invalid `tau`."
     omega1 = 0.5
@@ -643,40 +770,63 @@ function wsigma(z::Union{N,Vector{N}}; tau::Union{Missing,Number}=missing, omega
     omega1 = omega[1]
     tau = omega[2]/omega1
     @assert imag(tau) > 0 "Invalid `omega`."
+  elseif !ismissing(g)
+    omega1, tau = _omega1_and_tau(g)
   end
   w1 = -2 * omega1 / pi
-  j1 = _jtheta1(z/w1, tau)
+  j1 = _jtheta1.(z/w1, tau)
   f = _jtheta1dash0(tau)
   h = -pi/6/w1 * _jtheta1dashdashdash0(tau) / f
-  return w1 * exp(h*z*z/w1/pi) * j1 / f
+  return w1 * exp.(h * z .* z / w1 / pi) .* j1 / f
 end
 
 """
     wzeta(z; tau, omega)
 
-Weierstrass zeta-function.
+Weierstrass zeta-function. One and only one of the parameters `tau`, `omega` or `g` must be given.
 
 # Arguments
-- `z`: complex number or vector of complex numbers
+- `z`: complex number or vector/array of complex numbers
 - `tau`: half-periods ratio, complex number with non negative imaginary part
-- `omega`: half-periods, a pair of complex numbers; exactly one of `tau` or `omega` must be given
+- `omega`: half-periods, a pair of complex numbers
+- `g`: elliptic invariants, a pair of complex numbers
 """
-function wzeta(z::Union{N,Vector{N}}; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing) where N<:Number
-  local omega1
-  nmissing = ismissing(tau) + ismissing(omega)
-  @assert nmissing == 1 "You must supply either `tau` or `omega`."
-  if !ismissing(tau)
-    @assert imag(tau) > 0 "Invalid `tau`."
-    omega1 = 0.5
-  elseif !ismissing(omega)
-    omega1 = omega[1]
-    tau = omega[2]/omega1
-    @assert imag(tau) > 0 "Invalid `omega`."
+function wzeta(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing, g::Union{Missing,Tuple{Number,Number}}=missing)
+  local omega1, omega2
+  nmissing = ismissing(tau) + ismissing(omega) + ismissing(g)
+  @assert nmissing == 2 "You must supply either `tau`, `omega` or `g`."
+  if !ismissing(tau) || !ismissing(omega)
+    if !ismissing(tau)
+      @assert imag(tau) > 0 "Invalid `tau`."
+      omega1 = 0.5
+      omega2 = tau / 2
+    elseif !ismissing(omega)
+      omega1 = omega[1]
+      omega2 = omega[2]
+      tau = omega[2]/omega1
+      @assert imag(tau) > 0 "Invalid `omega`."
+    end
+    if omega1 == Inf && omega2 == 1im*Inf # i.e. g2=0 g3=0
+      return 1 ./ z
+    end
+    if omega1 == pi/sqrt(6) && omega2 == 1im*Inf # i.e. g2=3 g3=1
+      return z/2 + sqrt(3/2) / tan.(sqrt(3/2)*z)
+    end
+  end
+  if !ismissing(g)
+    g2, g3 = g
+    if g2 == 0 && g3 == 0
+      return 1 ./ z
+    end
+    if g2 == 3 && g3 == 1
+      return z/2 + sqrt(3/2) / tan.(sqrt(3/2)*z)
+    end
+    omega1, tau = _omega1_and_tau(g)
   end
   w1 = - omega1 / pi
   p = 1.0 / w1 / 2.0
   eta1 = p / 6.0 / w1 * _jtheta1dashdashdash0(tau) / _jtheta1dash0(tau)
-  return - eta1 * z + p * _dljtheta1(p * z, tau)
+  return - eta1 * z + p * _dljtheta1.(p * z, tau)
 end
 
 end  # module Jacobi
