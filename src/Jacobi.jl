@@ -37,7 +37,7 @@ end
 function calctheta3(z::Number, tau::Number, passes::Int64)
   out = complex(1.0, 0.0)
   n = 0
-  while n < 2000
+  while n < 3000
     n += 1
     qweight =
       xcispi(n * (n * tau + 2 * z)) +
@@ -47,14 +47,14 @@ function calctheta3(z::Number, tau::Number, passes::Int64)
       return log(out)
     end
   end
-  error("Reached 2000 iterations.")
+  error("Reached 3000 iterations.")
 end
 
 function argtheta3(z::Number, tau::Number, passin::Int64)
   local out
   passes = passin + 1
-  if passes > 2000
-    error("Reached 2000 iterations.")
+  if passes > 3000
+    error("Reached 3000 iterations.")
   end
   zimg = imag(z)
   h = imag(tau) / 2
@@ -73,8 +73,8 @@ end
 function dologtheta3(z::Number, tau::Number, passin::Int64)
   local tau2, out
   passes = passin + 1
-  if passes > 2000
-    error("Reached 2000 iterations.")
+  if passes > 3000
+    error("Reached 3000 iterations.")
   end
   rl = real(tau)
   if rl >= 0
@@ -149,7 +149,7 @@ function _jtheta1dash(z::Number, tau::Number)
   q = xcispi(tau)
   out = complex(0.0, 0.0)
   alt = -1.0
-  for n = 0:2000
+  for n = 0:3000
     alt = -alt
     k = 2.0 * n + 1.0
     outnew = out + alt * q^(n * (n + 1)) * k * cos(k * z)
@@ -158,7 +158,7 @@ function _jtheta1dash(z::Number, tau::Number)
     end
     out = outnew
   end
-  error("Reached 2000 iterations.")
+  error("Reached 3000 iterations.")
 end
 
 function _etaDedekind(tau::Number)
@@ -222,10 +222,10 @@ end
 First Jacobi theta function.
 
 # Arguments
-- `z`: complex number or vector of complex numbers
+- `z`: complex number or vector/array of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function jtheta1(z::Union{N,Vector{N}}, tau::Number) where N<:Number
+function jtheta1(z, tau::Number)
   @assert imag(tau) > 0 "Invalid `tau`."
   return _jtheta1.(z, tau)
 end
@@ -236,10 +236,10 @@ end
 Logarithm of the second Jacobi theta function.
 
 # Arguments
-- `z`: complex number or vector of complex numbers
+- `z`: complex number or vector/array of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function ljtheta2(z::Union{N,Vector{N}}, tau::Number) where N<:Number
+function ljtheta2(z, tau::Number)
   @assert imag(tau) > 0 "Invalid `tau`."
   return _ljtheta2.(z, tau)
 end
@@ -250,10 +250,10 @@ end
 Second Jacobi theta function.
 
 # Arguments
-- `z`: complex number or vector of complex numbers
+- `z`: complex number or vector/array of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function jtheta2(z::Union{N,Vector{N}}, tau::Number) where N<:Number
+function jtheta2(z, tau::Number)
   @assert imag(tau) > 0 "Invalid `tau`."
   return _jtheta2.(z, tau)
 end
@@ -264,10 +264,10 @@ end
 Logarithm of the third Jacobi theta function.
 
 # Arguments
-- `z`: complex number or vector of complex numbers
+- `z`: complex number or vector/array of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function ljtheta3(z::Union{N,Vector{N}}, tau::Number) where N<:Number
+function ljtheta3(z, tau::Number)
   @assert imag(tau) > 0 "Invalid `tau`."
   return _ljtheta3.(z, tau)
 end
@@ -278,10 +278,10 @@ end
 Third Jacobi theta function.
 
 # Arguments
-- `z`: complex number or vector of complex numbers
+- `z`: complex number or vector/array of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function jtheta3(z::Union{N,Vector{N}}, tau::Number) where N<:Number
+function jtheta3(z, tau::Number)
   @assert imag(tau) > 0 "Invalid `tau`."
   return _jtheta3.(z, tau)
 end
@@ -292,10 +292,10 @@ end
 Logarithm of the fourth Jacobi theta function.
 
 # Arguments
-- `z`: complex number or vector of complex numbers
+- `z`: complex number or vector/array of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function ljtheta4(z::Union{N,Vector{N}}, tau::Number) where N<:Number
+function ljtheta4(z, tau::Number)
   @assert imag(tau) > 0 "Invalid `tau`."
   return _ljtheta4.(z, tau)
 end
@@ -306,10 +306,10 @@ end
 Fourth Jacobi theta function.
 
 # Arguments
-- `z`: complex number or vector of complex numbers
+- `z`: complex number or vector/array of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function jtheta4(z::Union{N,Vector{N}}, tau::Number) where N<:Number
+function jtheta4(z, tau::Number)
   @assert imag(tau) > 0 "Invalid `tau`."
   return _jtheta4.(z, tau)
 end
@@ -320,12 +320,12 @@ end
 Derivative of the first Jacobi theta function.
 
 # Arguments
-- `z`: complex number
+- `z`: complex number or vector/array of complex numbers
 - `tau`: complex number with nonnegative imaginary part
 """
-function jtheta1dash(z::Number, tau::Number)
+function jtheta1dash(z, tau::Number)
   @assert imag(tau) > 0 "Invalid `tau`."
-  return _jtheta1dash(z, tau)
+  return _jtheta1dash.(z, tau)
 end
 
 """
@@ -604,11 +604,11 @@ end
 Weierstrass p-function.
 
 # Arguments
-- `z`: complex number or vector of complex numbers
+- `z`: complex number or vector/array of complex numbers
 - `tau`: half-periods ratio, complex number with non negative imaginary part
 - `omega`: half-periods, a pair of complex numbers; exactly one of `tau` or `omega` must be given
 """
-function wp(z::Union{N,Vector{N}}; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing) where N<:Number
+function wp(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing)
   nmissing = ismissing(tau) + ismissing(omega)
   @assert nmissing == 1 "You must supply either `tau` or `omega`."
   if !ismissing(tau)
@@ -618,7 +618,7 @@ function wp(z::Union{N,Vector{N}}; tau::Union{Missing,Number}=missing, omega::Un
   if !ismissing(omega)
     tau = omega[2]/omega[1]
     @assert imag(tau) > 0 "Invalid `omega`."
-    return _wpFromTau(z/omega[1]/2, tau) / omega[1] / omega[1] / 4
+    return _wpFromTau.(z/omega[1]/2, tau) / omega[1] / omega[1] / 4
   end
 end
 
@@ -628,11 +628,11 @@ end
 Weierstrass sigma-function.
 
 # Arguments
-- `z`: complex number or vector of complex numbers
+- `z`: complex number or vector/array of complex numbers
 - `tau`: half-periods ratio, complex number with non negative imaginary part
 - `omega`: half-periods, a pair of complex numbers; exactly one of `tau` or `omega` must be given
 """
-function wsigma(z::Union{N,Vector{N}}; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing) where N<:Number
+function wsigma(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing)
   local omega1
   nmissing = ismissing(tau) + ismissing(omega)
   @assert nmissing == 1 "You must supply either `tau` or `omega`."
@@ -645,10 +645,10 @@ function wsigma(z::Union{N,Vector{N}}; tau::Union{Missing,Number}=missing, omega
     @assert imag(tau) > 0 "Invalid `omega`."
   end
   w1 = -2 * omega1 / pi
-  j1 = _jtheta1(z/w1, tau)
+  j1 = _jtheta1.(z/w1, tau)
   f = _jtheta1dash0(tau)
   h = -pi/6/w1 * _jtheta1dashdashdash0(tau) / f
-  return w1 * exp(h*z*z/w1/pi) * j1 / f
+  return w1 * exp.(h * z .* z / w1 / pi) .* j1 / f
 end
 
 """
@@ -657,26 +657,34 @@ end
 Weierstrass zeta-function.
 
 # Arguments
-- `z`: complex number or vector of complex numbers
+- `z`: complex number or vector/array of complex numbers
 - `tau`: half-periods ratio, complex number with non negative imaginary part
 - `omega`: half-periods, a pair of complex numbers; exactly one of `tau` or `omega` must be given
 """
-function wzeta(z::Union{N,Vector{N}}; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing) where N<:Number
-  local omega1
+function wzeta(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing)
+  local omega1, omega2
   nmissing = ismissing(tau) + ismissing(omega)
   @assert nmissing == 1 "You must supply either `tau` or `omega`."
   if !ismissing(tau)
     @assert imag(tau) > 0 "Invalid `tau`."
     omega1 = 0.5
+    omega2 = tau / 2
   elseif !ismissing(omega)
     omega1 = omega[1]
+    omega2 = omega[2]
     tau = omega[2]/omega1
     @assert imag(tau) > 0 "Invalid `omega`."
+  end
+  if omega1 == Inf && omega2 == 1im*Inf # i.e. g2=0 g3=0
+    return 1 ./ z
+  end
+  if omega1 == pi/sqrt(6) && omega2 == 1im*Inf # i.e. g2=3 g3=1
+    return z/2 + sqrt(3/2) / tan.(sqrt(3/2)*z)
   end
   w1 = - omega1 / pi
   p = 1.0 / w1 / 2.0
   eta1 = p / 6.0 / w1 * _jtheta1dashdashdash0(tau) / _jtheta1dash0(tau)
-  return - eta1 * z + p * _dljtheta1(p * z, tau)
+  return - eta1 * z + p * _dljtheta1.(p * z, tau)
 end
 
 end  # module Jacobi
