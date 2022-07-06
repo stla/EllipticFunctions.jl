@@ -219,7 +219,7 @@ function _omega1_and_tau(g)
   return (omega1, tau)
 end
 
-function _g2_from_omega1_and_tau(omega1::Number, tau::Number){
+function _g2_from_omega1_and_tau(omega1::Number, tau::Number)
   j2 = _jtheta2_raw(0, tau)
   j3 = _jtheta3_raw(0, tau)
   return 4/3 * (pi/2/omega1)^4 * (j2^8 - (j2*j3)^4 + j3^8)
@@ -244,7 +244,7 @@ function _wpDerivative(z, omega1::Number, tau::Number)
     (_jtheta2_raw(0, tau) * _jtheta3_raw(0, tau) *
        _jtheta4_raw(0, tau) * j1.^3)
   2/(w1*w1*w1) * j2 .* j3 .* j4 .* f
-}
+end
 
 # exports ####
 
@@ -695,7 +695,7 @@ Weierstrass p-function. One and only one of the parameters `tau`, `omega` or `g`
 - `derivative`: order of differentiation, 0, 1, 2 or 3
 """
 function wp(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing, g::Union{Missing,Tuple{Number,Number}}=missing, derivative::Int64=0)
-  local omega1, tau, weier, weierPrime
+  local omega1, weier, weierPrime
   @assert derivative >= 0 && derivative <= 3 ArgumentError("`derivative` must be beetween 0 and 3.")
   nmissing = ismissing(tau) + ismissing(omega) + ismissing(g)
   @assert nmissing == 2 ArgumentError("You must supply either `tau`, `omega` or `g`.")
@@ -741,7 +741,7 @@ function wp(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Nu
       end
     end
   end
-  weierPrime = _weierDerivative(z, omega1, tau)
+  weierPrime = _wpDerivative(z, omega1, tau)
   if derivative == 1
     return weierPrime
   end
