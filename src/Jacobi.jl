@@ -163,7 +163,9 @@ function _jtheta1dash(z::Number, tau::Number)
 end
 
 function _etaDedekind(tau::Number)
-  return xcispi(tau / 12.0) * exp(dologtheta3((tau + 1.0) / 2.0, 3.0 * tau, 0))
+  return xcispi(-1 / tau / 12.0) *
+    exp(dologtheta3((-1 / tau + 1.0) / 2.0, -3.0 / tau, 0)) /
+    sqrt(-1im * tau)
 end
 
 function isvector(x)
@@ -192,6 +194,21 @@ function _dljtheta1(z::Number, tau::Number)
   return _jtheta1dash(z, tau) / _jtheta1(z, tau)
 end
 
+function _E4(tau::Number)
+  return (_jtheta2(0, tau)^8 + _jtheta3(0, tau)^8 + _jtheta4(0, tau)^8) / 2.0
+end
+
+function _omega1_and_tau(g)
+  g2, g3 = g
+  g2cube = g2*g2*g2
+  j = 1728 * g2cube / (g2cube - 27*g3*g3)
+  if isinf(j)
+    return (-1im*pi/2/sqrt(3), complex(Inf, Inf))
+  end
+  tau = kleinjinv(j)
+  omega1 = 1im * pi * sqrt(sqrt(1.0 / g2 / 12 * _E4(tau)))
+  return (omega1, tau)
+end
 
 function _wpFromTau(z::Number, tau::Number)
   j2 = _jtheta2(0, tau)
@@ -623,18 +640,34 @@ function EisensteinE2(q::Number)
 end
 
 """
+    EisensteinE4(q)
+
+Eisenstein E-series of weight 4.
+
+# Arguments
+- `q`: nome, complex number; it must not be a negative real number and its modulus must be strictly smaller than 1
+"""
+function EisensteinE4(q::Number)
+  @assert abs(q) < 1 "Invalid `q`."
+  @assert imag(q) != 0 || real(q) > 0 "Invalid `q`."
+  tau = -1im * log(q) / pi / 2.0
+  return (_jtheta2(0, tau)^8 + _jtheta3(0, tau)^8 + _jtheta4(0, tau)^8) / 2.0
+end
+
+"""
     wp(z; tau, omega)
 
-Weierstrass p-function.
+Weierstrass p-function. One and only one of the parameters `tau`, `omega` or `g` must be given.
 
 # Arguments
 - `z`: complex number or vector/array of complex numbers
 - `tau`: half-periods ratio, complex number with non negative imaginary part
-- `omega`: half-periods, a pair of complex numbers; exactly one of `tau` or `omega` must be given
+- `omega`: half-periods, a pair of complex numbers
+- `g`: elliptic invariants, a pair of complex numbers
 """
-function wp(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing)
-  nmissing = ismissing(tau) + ismissing(omega)
-  @assert nmissing == 1 "You must supply either `tau` or `omega`."
+function wp(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing, g::Union{Missing,Tuple{Number,Number}}=missing)
+  nmissing = ismissing(tau) + ismissing(omega) + ismissing(g)
+  @assert nmissing == 2 "You must supply either `tau`, `omega` or `g`."
   if !ismissing(tau)
     @assert imag(tau) > 0 "Invalid `tau`."
     return _wpFromTau.(z, tau)
@@ -644,22 +677,27 @@ function wp(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Nu
     @assert imag(tau) > 0 "Invalid `omega`."
     return _wpFromTau.(z/omega[1]/2, tau) / omega[1] / omega[1] / 4
   end
+  if !ismissing(g)
+    omega1, tau = _omega1_and_tau(g)
+    return _wpFromTau.(z/omega1/2, tau) / omega1 / omega1 / 4
+  end
 end
 
 """
     wsigma(z; tau, omega)
 
-Weierstrass sigma-function.
+Weierstrass sigma-function. One and only one of the parameters `tau`, `omega` or `g` must be given.
 
 # Arguments
 - `z`: complex number or vector/array of complex numbers
 - `tau`: half-periods ratio, complex number with non negative imaginary part
-- `omega`: half-periods, a pair of complex numbers; exactly one of `tau` or `omega` must be given
+- `omega`: half-periods, a pair of complex numbers
+- `g`: elliptic invariants, a pair of complex numbers
 """
-function wsigma(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing)
+function wsigma(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing, g::Union{Missing,Tuple{Number,Number}}=missing)
   local omega1
-  nmissing = ismissing(tau) + ismissing(omega)
-  @assert nmissing == 1 "You must supply either `tau` or `omega`."
+  nmissing = ismissing(tau) + ismissing(omega) + ismissing(g)
+  @assert nmissing == 2 "You must supply either `tau`, `omega` or `g`."
   if !ismissing(tau)
     @assert imag(tau) > 0 "Invalid `tau`."
     omega1 = 0.5
@@ -667,6 +705,8 @@ function wsigma(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tupl
     omega1 = omega[1]
     tau = omega[2]/omega1
     @assert imag(tau) > 0 "Invalid `omega`."
+  elseif !ismissing(g)
+    omega1, tau = _omega1_and_tau(g)
   end
   w1 = -2 * omega1 / pi
   j1 = _jtheta1.(z/w1, tau)
@@ -678,32 +718,45 @@ end
 """
     wzeta(z; tau, omega)
 
-Weierstrass zeta-function.
+Weierstrass zeta-function. One and only one of the parameters `tau`, `omega` or `g` must be given.
 
 # Arguments
 - `z`: complex number or vector/array of complex numbers
 - `tau`: half-periods ratio, complex number with non negative imaginary part
-- `omega`: half-periods, a pair of complex numbers; exactly one of `tau` or `omega` must be given
+- `omega`: half-periods, a pair of complex numbers
+- `g`: elliptic invariants, a pair of complex numbers
 """
-function wzeta(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing)
+function wzeta(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing, g::Union{Missing,Tuple{Number,Number}}=missing)
   local omega1, omega2
-  nmissing = ismissing(tau) + ismissing(omega)
-  @assert nmissing == 1 "You must supply either `tau` or `omega`."
-  if !ismissing(tau)
-    @assert imag(tau) > 0 "Invalid `tau`."
-    omega1 = 0.5
-    omega2 = tau / 2
-  elseif !ismissing(omega)
-    omega1 = omega[1]
-    omega2 = omega[2]
-    tau = omega[2]/omega1
-    @assert imag(tau) > 0 "Invalid `omega`."
+  nmissing = ismissing(tau) + ismissing(omega) + ismissing(g)
+  @assert nmissing == 2 "You must supply either `tau`, `omega` or `g`."
+  if !ismissing(tau) || !ismissing(omega)
+    if !ismissing(tau)
+      @assert imag(tau) > 0 "Invalid `tau`."
+      omega1 = 0.5
+      omega2 = tau / 2
+    elseif !ismissing(omega)
+      omega1 = omega[1]
+      omega2 = omega[2]
+      tau = omega[2]/omega1
+      @assert imag(tau) > 0 "Invalid `omega`."
+    end
+    if omega1 == Inf && omega2 == 1im*Inf # i.e. g2=0 g3=0
+      return 1 ./ z
+    end
+    if omega1 == pi/sqrt(6) && omega2 == 1im*Inf # i.e. g2=3 g3=1
+      return z/2 + sqrt(3/2) / tan.(sqrt(3/2)*z)
+    end
   end
-  if omega1 == Inf && omega2 == 1im*Inf # i.e. g2=0 g3=0
-    return 1 ./ z
-  end
-  if omega1 == pi/sqrt(6) && omega2 == 1im*Inf # i.e. g2=3 g3=1
-    return z/2 + sqrt(3/2) / tan.(sqrt(3/2)*z)
+  if !ismissing(g)
+    g2, g3 = g
+    if g2 == 0 && g3 == 0
+      return 1 ./ z
+    end
+    if g2 == 3 && g3 == 1
+      return z/2 + sqrt(3/2) / tan.(sqrt(3/2)*z)
+    end
+    omega1, tau = _omega1_and_tau(g)
   end
   w1 = - omega1 / pi
   p = 1.0 / w1 / 2.0

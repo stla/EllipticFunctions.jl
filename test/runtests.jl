@@ -105,12 +105,20 @@ end
   )
 end
 
-@testset "A value of wzeta." begin
+@testset "A value of wzeta given omega." begin
   omega1 = gamma(1/4)^2 / 4 / sqrt(pi)
   omega2 = 1im * omega1
   omega = (omega1, omega2)
   @test isapprox(
     wzeta(omega1; omega = omega),
     pi / 4 / omega1
+  )
+end
+
+@testset "A value of wzeta given g." begin
+  g = (5 + 3im, 5 + 3im)
+  @test isapprox(
+    wzeta(1 + 1im; g = g),
+    0.802084165492408 - 0.381791358666872im
   )
 end
