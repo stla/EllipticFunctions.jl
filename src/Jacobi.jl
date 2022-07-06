@@ -28,6 +28,7 @@ export thetaC
 export thetaD
 export thetaN
 export thetaS
+export jellip
 
 function xcispi(x)
     return exp(1im * pi * x)
@@ -837,7 +838,7 @@ Weierstrass zeta-function. One and only one of the parameters `tau`, `omega` or 
 function wzeta(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing, g::Union{Missing,Tuple{Number,Number}}=missing)
   local omega1, omega2
   nmissing = ismissing(tau) + ismissing(omega) + ismissing(g)
-  @assert nmissing == 2 "You must supply either `tau`, `omega` or `g`."
+  @assert nmissing == 2 ArgumentError("You must supply either `tau`, `omega` or `g`.")
   if !ismissing(tau) || !ismissing(omega)
     if !ismissing(tau)
       @assert imag(tau) > 0 "Invalid `tau`."
@@ -930,6 +931,46 @@ Neville N-theta function. Only one of the parameters `tau` or `m` must be suppli
 function thetaN(z; tau::Union{Missing,Number}=missing, m::Union{Missing,Number}=missing)
   tau = _check_and_get_tau_from_m(tau, m)
   return _thetaN(z, tau)
+end
+
+"""
+    jellip(kind, u; tau, m)
+
+Jacobi elliptic functions. Only one of the parameters `tau` or `m` must be supplied.
+
+# Arguments
+- `kind`: a string with two characters among 'c', 'd', 'n' or 's'; this string specifies the function: the two letters respectively denote the basic functions `sn`, `cn`, `dn` and `1`, and the string specifies the ratio of two such functions, e.g. `ns=1/sn` and `cd=cn/dn`
+- `u`: complex number or vector/array of complex numbers
+- `tau`: complex number with nonnegative imaginary part
+- `m`: complex number, square of the elliptic modulus
+"""
+function jellip(kind::String, u; tau::Union{Missing,Number}=missing, m::Union{Missing,Number}=missing)
+  local num, den
+  @assert length(kind) == 2 ArgumentError("The string `kind` must contain two characters.")
+  f1 = kind[1]
+  f2 = kind[2]
+  @assert f1 == 'c' || f1 == 'd'  || f1 == 'n'  || f1 == 's' ArgumentError("Invalid string `kind`.")
+  @assert f2 == 'c' || f2 == 'd'  || f2 == 'n'  || f2 == 's' ArgumentError("Invalid string `kind`.")
+  tau = _check_and_get_tau_from_m(tau, m)
+  if f1 == 'c'
+      num = _thetaC(u, tau)
+  elseif f1 == 'd'
+      num = _thetaD(u, tau)
+  elseif f1 == 'n'
+      num = _thetaN(u, tau)
+  else
+      num = _thetaS(u, tau)
+  end
+  if f2 == 'c'
+      den = _thetaC(u, tau)
+  elseif f2 == 'd'
+      den = _thetaD(u, tau)
+  elseif f2 == 'n'
+      den = _thetaN(u, tau)
+  else
+      den = _thetaS(u, tau)
+  end
+  return num ./ den
 end
 
 end  # module Jacobi

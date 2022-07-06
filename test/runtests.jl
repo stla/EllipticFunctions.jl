@@ -156,3 +156,12 @@ end
     0.82086879524530400536
   )
 end
+
+@testset "jellip functions." begin
+  u = 2 + 2im
+  tau = 1im
+  @test isapprox(
+    jellip("cn", u; tau = tau)^2 + jellip("sn", u; tau = tau)^2,
+    1
+  )
+end
