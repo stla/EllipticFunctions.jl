@@ -24,14 +24,10 @@ export wsigma
 export wzeta
 
 function areclose(z1::Number, z2::Number)
-  mod_z2 = abs(z2)
-  maxmod = (mod_z2 < eps()) ? 1.0 : max(abs(z1), mod_z2)
-  return abs(z1 - z2) < 2.0 * eps() * maxmod
-end
-
-function modulo(a::Real, p::Real)
-  i = a > 0 ? floor(a / p) : ceil(a / p)
-  return a - i * p
+  eps2 = eps()^2
+  mod2_z2 = abs2(z2)
+  maxmod2 = (mod2_z2 < eps2) ? 1.0 : max(abs2(z1), mod2_z2)
+  return abs2(z1 - z2) < 2.0 * eps2 * maxmod2
 end
 
 function calctheta3(z::Number, tau::Number, passes::Int64)
@@ -40,8 +36,8 @@ function calctheta3(z::Number, tau::Number, passes::Int64)
   while n < 2000
     n += 1
     qweight =
-      exp(n * 1im * pi * (n * tau + 2 * z)) +
-      exp(n * 1im * pi * (n * tau - 2 * z))
+      cispi(n * (n * tau + 2 * z)) +
+      cispi(n * (n * tau - 2 * z))
     out += qweight
     if n >= 3 && areclose(out + qweight, out)
       return log(out)
@@ -58,7 +54,7 @@ function argtheta3(z::Number, tau::Number, passin::Int64)
   end
   zimg = imag(z)
   h = imag(tau) / 2
-  zuse = complex(modulo(real(z), 1), zimg)
+  zuse = complex(rem(real(z), 1.0), zimg)
   if zimg < -h
     out = argtheta3(-zuse, tau, passes)
   elseif zimg >= h
@@ -78,9 +74,9 @@ function dologtheta3(z::Number, tau::Number, passin::Int64)
   end
   rl = real(tau)
   if rl >= 0
-    tau2 = modulo(rl + 1.0, 2.0) - 1.0 + 1im * imag(tau)
+    tau2 = rem(rl + 1.0, 2.0) - 1.0 + 1im * imag(tau)
   else
-    tau2 = modulo(rl - 1.0, 2.0) + 1.0 + 1im * imag(tau)
+    tau2 = rem(rl - 1.0, 2.0) + 1.0 + 1im * imag(tau)
   end
   if abs(tau2) < 0.98 && imag(tau2) < 0.98
     tauprime = -1.0 / tau2
@@ -133,12 +129,12 @@ function _jtheta4(z::Number, tau::Number)
   return exp(_ljtheta4(z, tau))
 end
 
-function M_raw(z::Number, tau::Number)
-  return 1im * pi * (z + tau / 4.0)
+function expM_raw(z::Number, tau::Number)
+  return cispi(z + tau / 4.0)
 end
 
 function _jtheta1_raw(z::Number, tau::Number)
-  return exp(M_raw(z - 0.5, tau) + dologtheta3(z - 0.5 + 0.5 * tau, tau, 0))
+  return expM_raw(z - 0.5, tau) * exp(dologtheta3(z - 0.5 + 0.5 * tau, tau, 0))
 end
 
 function _jtheta4_raw(z::Number, tau::Number)
@@ -146,7 +142,7 @@ function _jtheta4_raw(z::Number, tau::Number)
 end
 
 function _jtheta1dash(z::Number, tau::Number)
-  q = exp(1im * pi * tau)
+  q = cispi(tau)
   out = complex(0.0, 0.0)
   alt = -1.0
   for n = 0:2000
@@ -154,7 +150,7 @@ function _jtheta1dash(z::Number, tau::Number)
     k = 2.0 * n + 1.0
     outnew = out + alt * q^(n * (n + 1)) * k * cos(k * z)
     if areclose(out, outnew)
-      return 2 * q^0.25 * out
+      return 2 * sqrt(sqrt(q)) * out
     end
     out = outnew
   end
@@ -162,9 +158,7 @@ function _jtheta1dash(z::Number, tau::Number)
 end
 
 function _etaDedekind(tau::Number)
-  return exp(
-    1im * pi * tau / 12.0 + dologtheta3((tau + 1.0) / 2.0, 3.0 * tau, 0)
-  )
+  return cispi(tau / 12.0) * exp(dologtheta3((tau + 1.0) / 2.0, 3.0 * tau, 0))
 end
 
 function isvector(x)
@@ -388,19 +382,19 @@ function CarlsonRF(x::Number, y::Number, z::Number)
   dx = typemax(Float64)
   dy = typemax(Float64)
   dz = typemax(Float64)
-  epsilon = 2.0 * eps()
+  epsilon = 2.0 * eps()^2
   while dx > epsilon || dy > epsilon || dz > epsilon
     lambda = sqrt(x)*sqrt(y) + sqrt(y)*sqrt(z) + sqrt(z)*sqrt(x)
     x = (x + lambda) / 4.0
     y = (y + lambda) / 4.0
     z = (z + lambda) / 4.0
     A = (x + y + z) / 3.0
-    dx = abs(1.0 - x/A)
-    dy = abs(1.0 - y/A)
-    dz = abs(1.0 - z/A)
+    dx = abs2(1.0 - x/A)
+    dy = abs2(1.0 - y/A)
+    dz = abs2(1.0 - z/A)
   end
-  E2 = dx*dy + dy*dz + dz*dx
-  E3 = dy*dx*dz
+  E2 = sqrt(dx*dy) + sqrt(dy*dz) + sqrt(dz*dx)
+  E3 = sqrt(dy*dx*dz)
   return (1 - E2/10 + E3/14 + E2*E2/24 - 3*E2*E3/44 - 5*E2*E2*E2/208 +
     3*E3*E3/104 + E2*E2*E3/16) / sqrt(A)
 end
@@ -422,7 +416,7 @@ function CarlsonRD(x::Number, y::Number, z::Number)
   dx = typemax(Float64)
   dy = typemax(Float64)
   dz = typemax(Float64)
-  epsilon = 2.0 * eps()
+  epsilon = 2.0 * eps()^2
   s = complex(0.0, 0.0)
   fac = complex(1.0, 0.0)
   while dx > epsilon || dy > epsilon || dz > epsilon
@@ -433,10 +427,13 @@ function CarlsonRD(x::Number, y::Number, z::Number)
     y = (y + lambda) / 4.0
     z = (z + lambda) / 4.0
     A = (x + y + 3*z) / 5.0
-    dx = abs(1.0 - x/A)
-    dy = abs(1.0 - y/A)
-    dz = abs(1.0 - z/A)
+    dx = abs2(1.0 - x/A)
+    dy = abs2(1.0 - y/A)
+    dz = abs2(1.0 - z/A)
   end
+  dx = sqrt(dx)
+  dy = sqrt(dy)
+  dz = sqrt(dz)
   E2 = dx * dy + dy * dz + 3 * dz * dz + 2 * dz * dx +
               dx * dz + 2 * dy * dz
   E3 = dz * dz * dz + dx * dz * dz + 3 * dx * dy * dz +
@@ -464,15 +461,16 @@ function ellipticF(phi::Number, m::Number)
   if phi == 0 || m == Inf || m == -Inf
     return complex(0.0, 0.0)
   end
-  if real(phi) == 0 && imag(phi) == Inf && imag(m) == 0 && real(m) > 0 && real(m) < 1
+  rphi = real(phi)
+  if rphi == 0 && imag(phi) == Inf && imag(m) == 0 && real(m) > 0 && real(m) < 1
     return sign(imag(phi)) *
         (ellipticF(pi/2, m) - ellipticF(pi/2, 1/m) / sqrt(m))
   end
-  if abs(real(phi)) == pi/2 && m == 1
+  if abs(rphi) == pi/2 && m == 1
     return complex(NaN, NaN)
   end
-  if real(phi) >= -pi/2 && real(phi) <= pi/2
-    if m == 1 && abs(real(phi)) < pi/2
+  if rphi >= -pi/2 && rphi <= pi/2
+    if m == 1 && abs(rphi) < pi/2
       return atanh(sin(phi))
     end
     if m == 0
@@ -487,11 +485,11 @@ function ellipticF(phi::Number, m::Number)
     oneminusmsine2 = 1.0 - m * sine2
     return sine * CarlsonRF(cosine2, oneminusmsine2, complex(1.0, 0.0))
   end
-  if real(phi) > pi/2
-    k = ceil((real(phi)-pi/2) / pi)
+  if rphi > pi/2
+    k = ceil((rphi-pi/2) / pi)
     phi = phi - k * pi
   else
-    k = -floor((pi/2-real(phi)) / pi)
+    k = -floor((pi/2-rphi) / pi)
     phi = phi - k * pi
   end
   return 2*k*ellipticF(pi/2, m) + ellipticF(phi, m)
@@ -526,7 +524,8 @@ function ellipticE(phi::Number, m::Number)
   if real(m) == Inf && imag(m) == 0
     return complex(NaN, NaN)
   end
-  if real(phi) >= -pi/2 && real(phi) <= pi/2
+  rphi = real(phi)
+  if rphi >= -pi/2 && rphi <= pi/2
     if m == 0
       return phi
     end
@@ -543,11 +542,11 @@ function ellipticE(phi::Number, m::Number)
     return sine * (CarlsonRF(cosine2, oneminusmsine2, 1.0) -
             m * sine2 * CarlsonRD(cosine2, oneminusmsine2, 1.0) / 3)
   end
-  if real(phi) > pi/2
-    k = ceil((real(phi)-pi/2) / pi)
+  if rphi > pi/2
+    k = ceil((rphi-pi/2) / pi)
     phi = phi - k * pi
   else
-    k = -floor((pi/2-real(phi)) / pi)
+    k = -floor((pi/2-rphi) / pi)
     phi = phi - k * pi
   end
   return 2 * k * ellipticE(pi/2, m) + ellipticE(phi, m)
