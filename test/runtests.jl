@@ -135,3 +135,24 @@ end
     0.802084165492408 - 0.381791358666872im
   )
 end
+
+@testset "Neville theta functions." begin
+  z = 2.5
+  m = 0.3
+  @test isapprox(
+    thetaC(z; m = m),
+    -0.65900466676738154967
+  )
+  @test isapprox(
+    thetaD(z; m = m),
+    0.95182196661267561994
+  )
+  @test isapprox(
+    thetaN(z; m = m),
+    1.0526693354651613637
+  )
+  @test isapprox(
+    thetaS(z; m = m),
+    0.82086879524530400536
+  )
+end
