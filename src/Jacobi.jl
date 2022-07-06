@@ -23,6 +23,10 @@ export wp
 export wsigma
 export wzeta
 
+function xcispi(x)
+    return exp(1im * pi * x)
+end
+
 function areclose(z1::Number, z2::Number)
   eps2 = eps()^2
   mod2_z2 = abs2(z2)
@@ -36,8 +40,8 @@ function calctheta3(z::Number, tau::Number, passes::Int64)
   while n < 2000
     n += 1
     qweight =
-      cispi(n * (n * tau + 2 * z)) +
-      cispi(n * (n * tau - 2 * z))
+      xcispi(n * (n * tau + 2 * z)) +
+      xcispi(n * (n * tau - 2 * z))
     out += qweight
     if n >= 3 && areclose(out + qweight, out)
       return log(out)
@@ -130,7 +134,7 @@ function _jtheta4(z::Number, tau::Number)
 end
 
 function expM_raw(z::Number, tau::Number)
-  return cispi(z + tau / 4.0)
+  return xcispi(z + tau / 4.0)
 end
 
 function _jtheta1_raw(z::Number, tau::Number)
@@ -142,7 +146,7 @@ function _jtheta4_raw(z::Number, tau::Number)
 end
 
 function _jtheta1dash(z::Number, tau::Number)
-  q = cispi(tau)
+  q = xcispi(tau)
   out = complex(0.0, 0.0)
   alt = -1.0
   for n = 0:2000
@@ -158,7 +162,7 @@ function _jtheta1dash(z::Number, tau::Number)
 end
 
 function _etaDedekind(tau::Number)
-  return cispi(tau / 12.0) * exp(dologtheta3((tau + 1.0) / 2.0, 3.0 * tau, 0))
+  return xcispi(tau / 12.0) * exp(dologtheta3((tau + 1.0) / 2.0, 3.0 * tau, 0))
 end
 
 function isvector(x)
