@@ -95,6 +95,19 @@ end
   )
 end
 
+@testset "Differential equation wp." begin
+  g2 = 1.4 - 1im
+  g3 = 1.6 + 0.5im
+  g = (g2, g3)
+  z = 1 + 1im
+  p = wp(z; g = g)
+  pdash = wp(z; g = g, derivative = 1)
+  @test isapprox(
+    pdash^2,
+    4 * p^3 - g2 * p - g3
+  )
+end
+
 @testset "A value of wsigma." begin
   omega1 = gamma(1/4)^2 / 4 / sqrt(pi)
   omega2 = 1im * omega1

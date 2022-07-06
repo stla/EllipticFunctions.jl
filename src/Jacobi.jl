@@ -20,6 +20,7 @@ export ellipticK
 export ellipticE
 export agm
 export EisensteinE2
+export EisensteinE4
 export wp
 export wsigma
 export wzeta
@@ -142,6 +143,14 @@ function _jtheta1_raw(z::Number, tau::Number)
   return expM_raw(z - 0.5, tau) * exp(dologtheta3(z - 0.5 + 0.5 * tau, tau, 0))
 end
 
+function _jtheta2_raw(z::Number, tau::Number)
+  return expM_raw(z, tau) * exp(dologtheta3(z + 0.5 * tau, tau, 0))
+end
+
+function _jtheta3_raw(z::Number, tau::Number)
+  return exp(dologtheta3(z, tau, 0))
+end
+
 function _jtheta4_raw(z::Number, tau::Number)
   return exp(dologtheta3(z + 0.5, tau, 0))
 end
@@ -210,12 +219,31 @@ function _omega1_and_tau(g)
   return (omega1, tau)
 end
 
-function _wpFromTau(z::Number, tau::Number)
+function _g2_from_omega1_and_tau(omega1::Number, tau::Number)
+  j2 = _jtheta2_raw(0, tau)
+  j3 = _jtheta3_raw(0, tau)
+  return 4/3 * (pi/2/omega1)^4 * (j2^8 - (j2*j3)^4 + j3^8)
+end
+
+function _wpFromTau(z, tau::Number)
   j2 = _jtheta2(0, tau)
   j3 = _jtheta3(0, tau)
-  j1 = _jtheta1_raw(z, tau)
-  j4 = _jtheta4_raw(z, tau)
-  return (pi * j2 * j3 * j4 / j1)^2 - pi^2 * (j2^4 + j3^4) / 3.0
+  j1 = _jtheta1_raw.(z, tau)
+  j4 = _jtheta4_raw.(z, tau)
+  return (pi * j2 * j3 * j4 ./ j1)^2 .- (pi^2 * (j2^4 + j3^4) / 3.0)
+end
+
+function _wpDerivative(z, omega1::Number, tau::Number)
+  w1 = 2 * omega1 / pi
+  z1 = - z / 2 / omega1
+  j1 = _jtheta1_raw.(z1, tau)
+  j2 = _jtheta2_raw.(z1, tau)
+  j3 = _jtheta3_raw.(z1, tau)
+  j4 = _jtheta4_raw.(z1, tau)
+  f = _jtheta1dash0(tau)^3 /
+    (_jtheta2_raw(0, tau) * _jtheta3_raw(0, tau) *
+       _jtheta4_raw(0, tau) * j1.^3)
+  2/(w1*w1*w1) * j2 .* j3 .* j4 .* f
 end
 
 # exports ####
@@ -664,23 +692,60 @@ Weierstrass p-function. One and only one of the parameters `tau`, `omega` or `g`
 - `tau`: half-periods ratio, complex number with non negative imaginary part
 - `omega`: half-periods, a pair of complex numbers
 - `g`: elliptic invariants, a pair of complex numbers
+- `derivative`: order of differentiation, 0, 1, 2 or 3
 """
-function wp(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing, g::Union{Missing,Tuple{Number,Number}}=missing)
+function wp(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing, g::Union{Missing,Tuple{Number,Number}}=missing, derivative::Int64=0)
+  local omega1, weier, weierPrime
+  @assert derivative >= 0 && derivative <= 3 ArgumentError("`derivative` must be beetween 0 and 3.")
   nmissing = ismissing(tau) + ismissing(omega) + ismissing(g)
-  @assert nmissing == 2 "You must supply either `tau`, `omega` or `g`."
+  @assert nmissing == 2 ArgumentError("You must supply either `tau`, `omega` or `g`.")
   if !ismissing(tau)
     @assert imag(tau) > 0 "Invalid `tau`."
-    return _wpFromTau.(z, tau)
+    if derivative != 1
+      weier = _wpFromTau(z, tau)
+      if derivative == 0
+        return weier
+      end
+      if derivative == 2
+        g2 = _g2_from_omega1_and_tau(omega1, tau)
+        return 6 * weier * weier .- g2/2
+      end
+    end
+    omega1 = 0.5
   end
   if !ismissing(omega)
-    tau = omega[2]/omega[1]
+    omega1, omega2 = omega
+    tau = omega2/omega1
     @assert imag(tau) > 0 "Invalid `omega`."
-    return _wpFromTau.(z/omega[1]/2, tau) / omega[1] / omega[1] / 4
+    if derivative != 1
+      weier = _wpFromTau(z/omega1/2, tau) / omega1 / omega1 / 4
+      if derivative == 0
+        return weier
+      end
+      if derivative == 2
+        g2 = _g2_from_omega1_and_tau(omega1, tau)
+        return 6 * weier * weier .- g2/2
+      end
+    end
   end
   if !ismissing(g)
     omega1, tau = _omega1_and_tau(g)
-    return _wpFromTau.(z/omega1/2, tau) / omega1 / omega1 / 4
+    if derivative != 1
+      weier = _wpFromTau(z/omega1/2, tau) / omega1 / omega1 / 4
+      if derivative == 0
+        return weier
+      end
+      if derivative == 2
+        g2, g3 = g
+        return 6 * weier * weier .- g2/2
+      end
+    end
   end
+  weierPrime = _wpDerivative(z, omega1, tau)
+  if derivative == 1
+    return weierPrime
+  end
+  return 12 * weier * weierPrime # derivative = 3
 end
 
 """
@@ -697,7 +762,7 @@ Weierstrass sigma-function. One and only one of the parameters `tau`, `omega` or
 function wsigma(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing, g::Union{Missing,Tuple{Number,Number}}=missing)
   local omega1
   nmissing = ismissing(tau) + ismissing(omega) + ismissing(g)
-  @assert nmissing == 2 "You must supply either `tau`, `omega` or `g`."
+  @assert nmissing == 2 ArgumentError("You must supply either `tau`, `omega` or `g`.")
   if !ismissing(tau)
     @assert imag(tau) > 0 "Invalid `tau`."
     omega1 = 0.5
