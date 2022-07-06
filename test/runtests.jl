@@ -67,6 +67,14 @@ end
   )
 end
 
+@testset "kleinjinv works." begin
+  j = 0.1 + 0.2im
+  @test isapprox(
+    kleinj(kleinjinv(j)),
+    j
+  )
+end
+
 @testset "EisensteinE2 development." begin
   q = 0.005 + 0.005im
   @test isapprox(

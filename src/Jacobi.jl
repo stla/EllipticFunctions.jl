@@ -12,6 +12,7 @@ export jtheta1dash
 export etaDedekind
 export lambda
 export kleinj
+export kleinjinv
 export CarlsonRF
 export CarlsonRD
 export ellipticF
@@ -31,7 +32,7 @@ function areclose(z1::Number, z2::Number)
   eps2 = eps()^2
   mod2_z2 = abs2(z2)
   maxmod2 = (mod2_z2 < eps2) ? 1.0 : max(abs2(z1), mod2_z2)
-  return abs2(z1 - z2) < 2.0 * eps2 * maxmod2
+  return abs2(z1 - z2) < 4.0 * eps2 * maxmod2
 end
 
 function calctheta3(z::Number, tau::Number, passes::Int64)
@@ -581,6 +582,29 @@ function agm(x::Number, y::Number)
     return complex(0.0, 0.0)
   end
   return pi/4 * (x + y) / ellipticK(((x-y)/(x+y))^2)
+end
+
+"""
+    kleinjinv(j)
+
+Inverse of the Klein j-invariant function.
+
+# Arguments
+- `j`: complex number
+"""
+function kleinjinv(j::Number)
+  local x
+  if isinf(j)
+    x = complex(0.0, 0.0)
+  else
+    j2 = j * j
+    j3 = j2 * j
+    t = (-j3 + 2304 * j2 + 12288 *
+          sqrt(3 * (1728 * j2 - j3)) - 884736 * j)^(1/3)
+    x = 1/768 * t - (1536 * j - j2) / (768 * t) + (1 - j/768)
+  end
+  lbd = -(-1 - sqrt(1 - 4*x)) / 2
+  return 1im * agm(1, sqrt(1-lbd)) / agm(1, sqrt(lbd))
 end
 
 """
