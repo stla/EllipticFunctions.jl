@@ -1,4 +1,4 @@
-using Jacobi
+using EllipticFunctions
 using SpecialFunctions
 using Test
 
