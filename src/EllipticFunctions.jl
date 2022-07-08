@@ -29,9 +29,14 @@ export thetaD
 export thetaN
 export thetaS
 export jellip
+export am
 
 function xcispi(x)
     return exp(1im * pi * x)
+end
+
+function isqrt(x::Number)
+  return sqrt(Complex(x))
 end
 
 function areclose(z1::Number, z2::Number)
@@ -169,7 +174,7 @@ function _jtheta1dash(z::Number, tau::Number)
     k = 2.0 * n + 1.0
     outnew = out + alt * q^(n * (n + 1)) * k * cos(k * z)
     if areclose(out, outnew)
-      return 2 * sqrt(sqrt(q)) * out
+      return 2 * sqrt(isqrt(q)) * out
     end
     out = outnew
   end
@@ -478,7 +483,7 @@ function CarlsonRF(x::Number, y::Number, z::Number)
   dz = typemax(Float64)
   epsilon = 2.0 * eps()^2
   while dx > epsilon || dy > epsilon || dz > epsilon
-    lambda = sqrt(x)*sqrt(y) + sqrt(y)*sqrt(z) + sqrt(z)*sqrt(x)
+    lambda = isqrt(x)*isqrt(y) + isqrt(y)*isqrt(z) + isqrt(z)*isqrt(x)
     x = (x + lambda) / 4.0
     y = (y + lambda) / 4.0
     z = (z + lambda) / 4.0
@@ -514,8 +519,8 @@ function CarlsonRD(x::Number, y::Number, z::Number)
   s = complex(0.0, 0.0)
   fac = complex(1.0, 0.0)
   while dx > epsilon || dy > epsilon || dz > epsilon
-    lambda = sqrt(x)*sqrt(y) + sqrt(y)*sqrt(z) + sqrt(z)*sqrt(x)
-    s = s + fac/(sqrt(z) * (z + lambda))
+    lambda = isqrt(x)*isqrt(y) + isqrt(y)*isqrt(z) + isqrt(z)*isqrt(x)
+    s = s + fac/(isqrt(z) * (z + lambda))
     fac = fac / 4.0
     x = (x + lambda) / 4.0
     y = (y + lambda) / 4.0
@@ -558,7 +563,7 @@ function ellipticF(phi::Number, m::Number)
   rphi = real(phi)
   if rphi == 0 && imag(phi) == Inf && imag(m) == 0 && real(m) > 0 && real(m) < 1
     return sign(imag(phi)) *
-        (ellipticF(pi/2, m) - ellipticF(pi/2, 1/m) / sqrt(m))
+        (ellipticF(pi/2, m) - ellipticF(pi/2, 1/m) / isqrt(m))
   end
   if abs(rphi) == pi/2 && m == 1
     return complex(NaN, NaN)
@@ -689,7 +694,7 @@ function kleinjinv(j::Number)
     j2 = j * j
     j3 = j2 * j
     t = (-j3 + 2304 * j2 + 12288 *
-          sqrt(3 * (1728 * j2 - j3)) - 884736 * j)^(1/3)
+          isqrt(3 * (1728 * j2 - j3)) - 884736 * j)^(1/3)
     x = 1/768 * t - (1536 * j - j2) / (768 * t) + (1 - j/768)
   end
   lbd = -(-1 - sqrt(1 - 4*x)) / 2
@@ -971,6 +976,21 @@ function jellip(kind::String, u; tau::Union{Missing,Number}=missing, m::Union{Mi
       den = _thetaS(u, tau)
   end
   return num ./ den
+end
+
+"""
+    am(u, k)
+
+Amplitude function.
+
+# Arguments
+- `u`: complex number or vector/array of complex numbers
+- `k`: complex number, the elliptic modulus
+"""
+function am(u, m::Number)
+  w = asin.(jellip("sn", u; m = m))
+  k = round.(real.(u) / pi) + round.(real.(w) / pi)
+  return (-1).^k .* w + k * pi
 end
 
 end  # module Jacobi

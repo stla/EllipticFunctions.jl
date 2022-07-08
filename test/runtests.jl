@@ -165,3 +165,20 @@ end
     1
   )
 end
+
+@testset "am function." begin
+  phi = 1 + 1im
+  m = 2 - 1im
+  u = ellipticF(phi, m)
+  v = 2 - 2im
+  psi = am(v, m)
+  @test isapprox(
+    am(u, m),
+    phi
+  )
+  @test isapprox(
+    ellipticF(psi, m),
+    v
+  )
+end
+
