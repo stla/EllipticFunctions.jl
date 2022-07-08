@@ -993,4 +993,99 @@ function am(u, m::Number)
   return (-1).^k .* w + k * pi
 end
 
+
+################################# Beginning of althetas branch mods ##########################
+# Use NIST definition where q = cispi(tau)
+function _calctheta1_alt1(z::Number, q::Number)
+  n = -1
+  series = zero(promote_type(typeof(z), typeof(q)))
+  maxiter = 3000
+  while n < maxiter
+    n += 1
+    term = q^(n*(n+1)) * sin((2n+1)*z)
+    isodd(n) && (term = -term)
+    nextseries = series + term
+    if n ≥ 2 && areclose(nextseries, series)
+      return 2 * sqrt(sqrt(q)) * series
+    else
+      series = nextseries
+    end
+  end
+  error("Reached $maxiter iterations.")
+end
+
+# Use Poisson transform of NIST definition:
+"""
+    _calctheta1_alt2(zopi::Number, topi::Number)
+
+Calculate the Jacobian elliptic theta function θ₁ using the Poisson summation
+formula.  Most useful for 0 < Im(tau) ≤ 1/π.  
+
+# Input Arguments:
+- `zopi`: z/π, where z is the first argument of the theta function.
+- `topi`: t/π, where t = -i*τ, and τ is the second argument of the theta function.
+"""
+function _calctheta1_alt2(zopi::Number, topi::Number)
+  nminus = round(Int, 0.5 - real(zopi)) + 1
+  nplus = nminus - 1
+  series = zero(promote_type(typeof(zopi), typeof(topi)))
+  maxterms = 3000
+  while nplus - nminus < maxterms
+    nplus += 1
+    nminus -= 1
+    termm = exp(-(nminus - 0.5 + zopi)^2 / topi)
+    termp = exp(-(nplus - 0.5 + zopi)^2 / topi)
+    if isodd(nplus) 
+      termp = -termp
+    else
+      termm = -termm
+    end
+    nextseries = series + (termp + termm)
+    if nplus - nminus > 2 && areclose(nextseries, series)
+      return sqrt(1/(pi * topi)) * series
+    else
+      series = nextseries
+    end
+  end
+  error("Reached $maxterms terms.")
+end
+
+function altjtheta1(z::Number, tau::Complex)
+  imag(tau) > 0 || throw(ArgumentError("tau must have positive imaginary part"))
+  if imag(tau) > 1.3 # Chosen empirically
+    # Large imag(tau) case: compute in terms of q
+    q = xcispi(tau)
+    if isreal(q) 
+      if isreal(z)
+        # Both inputs are real
+        outr = _calctheta1_alt1(real(z), real(q))
+        out = complex(outr, zero(outr))
+      else
+        # q is real, but z isn't
+        out = _calctheta1_alt1(z, real(q))
+      end
+    else
+      # q is not real
+      out = _calctheta1_alt1(z, q)
+    end
+  else
+    # Small imag(tau) case: compute in terms of t/pi where t = -im * tau
+    topi = -im * (tau/pi)
+    if isreal(topi)
+      if isreal(z)
+        # both z and t are real
+        outr = _calctheta1_alt2(real(z)/pi, real(topi))
+        out = complex(outr, 0)
+      else
+        # t is real but z isn't
+        out = _calctheta1_alt2(z/pi, real(topi))
+      end
+    else
+      # t is not real.  No point in special casing real z here
+      out = _calctheta1_alt2(z/pi, topi)
+    end
+  end
+  return out
+end
+
 end  # module Jacobi
