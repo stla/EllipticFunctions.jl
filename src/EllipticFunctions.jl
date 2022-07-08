@@ -979,13 +979,13 @@ function jellip(kind::String, u; tau::Union{Missing,Number}=missing, m::Union{Mi
 end
 
 """
-    am(u, k)
+    am(u, m)
 
 Amplitude function.
 
 # Arguments
 - `u`: complex number or vector/array of complex numbers
-- `k`: complex number, the elliptic modulus
+- `m`: complex number, square of the elliptic modulus
 """
 function am(u, m::Number)
   w = asin.(jellip("sn", u; m = m))
