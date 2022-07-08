@@ -1,5 +1,5 @@
 push!(LOAD_PATH,"../src/")
 
-using Documenter, Jacobi
+using Documenter, EllipticFunctions
 
-makedocs(sitename="Jacobi", modules = [Jacobi])
+makedocs(sitename="EllipticFunctions", modules = [EllipticFunctions])

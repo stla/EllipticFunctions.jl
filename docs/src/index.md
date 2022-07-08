@@ -1,10 +1,10 @@
-# Jacobi.jl documentation
+# EllipticFunctions.jl documentation
 
 Jacobi theta functions and related functions.
 
 
 ```julia
-using Jacobi
+using EllipticFunctions
 using Images
 # array of complex values.
 z = (1:-0.001:-1) .* im .+ (-1:0.001:1)';
@@ -27,7 +27,7 @@ function colormap(z)
 end
 # function to be plottes
 function f(z)
-    return Jacobi.wzeta(z; tau = 0.1 + 3im)
+    return EllipticFunctions.wzeta(z; tau = 0.1 + 3im)
 end
 # raster image
 image = colormap.(f(3*z))

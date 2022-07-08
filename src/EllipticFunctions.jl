@@ -1,4 +1,4 @@
-module Jacobi
+module EllipticFunctions
 
 export ljtheta1
 export jtheta1
