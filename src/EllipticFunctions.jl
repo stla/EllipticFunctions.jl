@@ -1000,9 +1000,16 @@ function _calctheta1_alt1(z::Number, q::Number)
   n = -1
   series = zero(promote_type(typeof(z), typeof(q)))
   maxiter = 3000
+  q² = q * q
+  q²ⁿ = one(q)
+  qⁿ⁽ⁿ⁺¹⁾ = one(q)
   while n < maxiter
     n += 1
-    term = q^(n*(n+1)) * sin((2n+1)*z)
+    if n > 0
+      q²ⁿ *= q²
+      qⁿ⁽ⁿ⁺¹⁾ *= q²ⁿ
+    end
+    term = qⁿ⁽ⁿ⁺¹⁾ * sin((2n+1)*z)
     isodd(n) && (term = -term)
     nextseries = series + term
     if n ≥ 2 && areclose(nextseries, series)
@@ -1019,7 +1026,7 @@ end
     _calctheta1_alt2(zopi::Number, topi::Number)
 
 Calculate the Jacobian elliptic theta function θ₁ using the Poisson summation
-formula.  Most useful for 0 < Im(tau) ≤ 1/π.  
+formula.  Most useful for 0 < Im(tau) ≤ 1.3.  
 
 # Input Arguments:
 - `zopi`: z/π, where z is the first argument of the theta function.
