@@ -40,6 +40,7 @@ function isqrt(x::Number)
 end
 
 function areclose(z1::Number, z2::Number)
+  isinf(z1) && isinf(z2) && (return true)
   eps2 = eps()^2
   mod2_z2 = abs2(z2)
   maxmod2 = (mod2_z2 < eps2) ? 1.0 : max(abs2(z1), mod2_z2)
