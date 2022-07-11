@@ -3,10 +3,17 @@ using SpecialFunctions
 using Test
 
 @testset "Some values of the jtheta functions." begin
-  @test isapprox(jtheta3(0, 1im), pi^(1 / 4) / gamma(3 / 4))
+  @test isapprox(
+    jtheta3(0, 1im), 
+    pi^(1 / 4) / gamma(3 / 4)
+  )
   @test isapprox(
     jtheta1(1 + 1im, 1im),
     1.1816128551455719 + 0.59589712760417439im
+  )
+  @test isapprox(
+    jtheta1(20, 0.01im),
+    0.03608696080206
   )
   @test isapprox(
     jtheta2(1 + 1im, 1im),
