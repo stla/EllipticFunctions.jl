@@ -48,6 +48,28 @@ end
   )
 end
 
+@testset "CarlsonRJ homogeneity." begin
+  x = 1 + im
+  y = -2 + 3im
+  z = -3
+  p = 4im
+  kappa = 2
+  @test isapprox(
+    CarlsonRJ(x, y, z, p) / kappa / sqrt(kappa),
+    CarlsonRJ(kappa*x, kappa*y, kappa*z, kappa*p)
+  )
+end
+
+@testset "CarlsonRJ(x, y, y, p)." begin
+  x = 1 + im
+  y = -2 + 3im
+  p = 4im
+  @test isapprox(
+    CarlsonRJ(x, y, y, p),
+    3 * (CarlsonRC(x, y) - CarlsonRC(x, p)) / (p - y)
+  )
+end
+
 @testset "A value of ellipticK." begin
   @test isapprox(
     ellipticK(0.5),

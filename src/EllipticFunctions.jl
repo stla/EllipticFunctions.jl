@@ -14,7 +14,10 @@ export lambda
 export kleinj
 export kleinjinv
 export CarlsonRF
+export CarlsonRC
 export CarlsonRD
+export CarlsonRG
+export CarlsonRJ
 export ellipticF
 export ellipticK
 export ellipticE
@@ -509,11 +512,11 @@ function CarlsonRF(x::Number, y::Number, z::Number)
   xzero = x == 0
   yzero = y == 0
   zzero = z == 0
-  @assert xzero + yzero + zzero <= 1 "At most one of `x`, `y`, `z` can be 0."
+  @assert xzero + yzero + zzero <= 1 ArgumentError("At most one of `x`, `y`, `z` can be 0.")
   dx = typemax(Float64)
   dy = typemax(Float64)
   dz = typemax(Float64)
-  epsilon = 2.0 * eps()^2
+  epsilon = 10.0 * eps()^2
   while dx > epsilon || dy > epsilon || dz > epsilon
     lambda = isqrt(x)*isqrt(y) + isqrt(y)*isqrt(z) + isqrt(z)*isqrt(x)
     x = (x + lambda) / 4.0
@@ -531,6 +534,19 @@ function CarlsonRF(x::Number, y::Number, z::Number)
 end
 
 """
+    CarlsonRC(x, y, z)
+
+Carlson 'RC' integral.
+
+# Arguments
+- `x`,`y`: complex numbers; `y` cannot be zero
+"""
+function CarlsonRC(x::Number, y::Number)
+  @assert y != 0 ArgumentError("`y` cannot be 0.")
+  return CarlsonRF(x, y, y)
+end
+
+"""
     CarlsonRD(x, y, z)
 
 Carlson 'RD' integral.
@@ -543,11 +559,11 @@ function CarlsonRD(x::Number, y::Number, z::Number)
   xzero = x == 0
   yzero = y == 0
   zzero = z == 0
-  @assert xzero + yzero + zzero <= 1 "At most one of `x`, `y`, `z` can be 0."
+  @assert xzero + yzero + zzero <= 1 ArgumentError("At most one of `x`, `y`, `z` can be 0.")
   dx = typemax(Float64)
   dy = typemax(Float64)
   dz = typemax(Float64)
-  epsilon = 2.0 * eps()^2
+  epsilon = 10.0 * eps()^2
   s = complex(0.0, 0.0)
   fac = complex(1.0, 0.0)
   while dx > epsilon || dy > epsilon || dz > epsilon
@@ -576,6 +592,96 @@ function CarlsonRD(x::Number, y::Number, z::Number)
           9 * E2 * E3/52 + 3 * E5/26 - E2 * E2 * E2/16 +
           3 * E3 * E3/40 + 3 * E2 * E4/20 + 45 * E2 * E2 * E3/272 -
           9 * (E3 * E4 + E2 * E5)/68) / A / sqrt(A)
+end
+
+"""
+    CarlsonRG(x, y, z)
+
+Carlson 'RG' integral.
+
+# Arguments
+- `x`,`y`,`z`: complex numbers
+"""
+function CarlsonRG(x::Number, y::Number, z::Number)
+  local A
+  xzero = x == 0
+  yzero = y == 0
+  zzero = z == 0
+  nzeros = xzero + yzero + zzero
+  if nzeros == 3
+    return complex(0.0, 0.0)
+  end
+  if nzeros == 2
+    return isqrt(x + y + z) / 2
+  end
+  if zzero
+    return CarlsonRG(y, z, x)
+  end
+  return (z * CarlsonRF(x, y, z) - 
+    (x - z) * (y - z) * CarlsonRD(x, y, z) / 3 + 
+    isqrt(x) * isqrt(y) / isqrt(z)) / 2
+end
+
+"""
+    CarlsonRJ(x, y, z)
+
+Carlson 'RJ' integral.
+
+# Arguments
+- `x`,`y`,`z`,`p`: complex numbers; at most one of them can be zero
+"""
+function CarlsonRJ(x::Number, y::Number, z::Number, p::Number)
+  xzero = x == 0
+  yzero = y == 0
+  zzero = z == 0
+  pzero = p == 0
+  nzeros = xzero + yzero + zzero + pzero
+  @assert nzeros <= 1 ArgumentError("At most one of `x`, `y`, `z`, `p` can be 0.")
+  A0 = (x + y + z + p + p) / 5
+  A = A0
+  delta = (p - x) * (p - y) * (p - z)
+  f = 1
+  fac = 1
+  d = Vector{Complex}(undef, 0)
+  e = Vector{Complex}(undef, 0)
+  epsilon = 10 * eps()
+  Q = (4 / epsilon)^(1/3) * max(abs2(A-x), abs2(A-y), abs2(A-z), abs2(A-p))
+  x = Complex(x)
+  y = Complex(y)
+  z = Complex(z)
+  p = Complex(p)
+  while abs2(A) <= Q
+    sqrt_x = sqrt(x)
+    sqrt_y = sqrt(y)
+    sqrt_z = sqrt(z)
+    sqrt_p = sqrt(p)
+    dnew = (sqrt_p + sqrt_x) * (sqrt_p + sqrt_y) * (sqrt_p + sqrt_z)
+    d = vcat(d, dnew * f)
+    e = vcat(e, fac * delta / dnew / dnew)
+    f = f * 4
+    fac = fac / 64
+    lambda = sqrt_x*sqrt_y + sqrt_y*sqrt_z + sqrt_z*sqrt_x
+    x = (x + lambda) / 4
+    y = (y + lambda) / 4
+    z = (z + lambda) / 4
+    p = (p + lambda) / 4
+    A = (A + lambda) / 4
+    Q = Q / 16
+  end
+  M_1_fA = 1 / f / A
+  X = (A0-x) * M_1_fA
+  Y = (A0-y) * M_1_fA
+  Z = (A0-z) * M_1_fA
+  P = -(X+Y+Z) / 2
+  E2 = X*Y + X*Z + Y*Z - 3*P*P
+  E3 = X*Y*Z + 2*E2*P + 4*P*P*P
+  E4 = P*(2*X*Y*Z + E2*P + 3*P*P*P)
+  E5 = X*Y*Z*P*P
+  g = (1 - 3*E2/14 + E3/6 + 9*E2*E2/88 - 3*E4/22 - 9*E2*E3/52 + 3*E5/26) /
+    f / A / sqrt(A)
+  return length(e) > 1 ? 
+    (6 * sum(ifelse.(e .== 0, Complex(1.0), atan.(sqrt.(e)) / sqrt.(e) ) ./ d)) : 
+    Complex(0.0)
 end
 
 """
