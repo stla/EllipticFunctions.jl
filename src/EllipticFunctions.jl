@@ -204,10 +204,17 @@ function _jtheta1dash(z::Number, tau::Complex)
   q = xcispi(tau)
   out = complex(0.0, 0.0)
   alt = -1.0
+  q² = q * q
+  q²ⁿ = one(q)
+  qⁿ⁽ⁿ⁺¹⁾ = one(q)
   for n = 0:3000
+    if n > 0
+      q²ⁿ *= q²
+      qⁿ⁽ⁿ⁺¹⁾ *= q²ⁿ
+    end
     alt = -alt
     k = 2.0 * n + 1.0
-    outnew = out + alt * q^(n * (n + 1)) * k * cos(k * z)
+    outnew = out + alt * qⁿ⁽ⁿ⁺¹⁾ * k * cos(k * z)
     if areclose(out, outnew)
       return 2 * sqrt(isqrt(q)) * out
     end
