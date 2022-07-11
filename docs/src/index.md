@@ -64,12 +64,16 @@ CarlsonRD
 CarlsonRF
 CarlsonRG
 CarlsonRJ
+ellipticE
 ellipticF
 ellipticK
-ellipticE
+ellipticPI
+ellipticZ
 agm
 EisensteinE2
 EisensteinE4
+ellipticInvariants
+halfPeriods
 wp
 wsigma
 wzeta

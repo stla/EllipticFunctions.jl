@@ -18,12 +18,16 @@ export CarlsonRC
 export CarlsonRD
 export CarlsonRG
 export CarlsonRJ
+export ellipticE
 export ellipticF
 export ellipticK
-export ellipticE
+export ellipticZ
+export ellipticPI
 export agm
 export EisensteinE2
 export EisensteinE4
+export halfPeriods
+export ellipticInvariants
 export wp
 export wsigma
 export wzeta
@@ -50,8 +54,6 @@ function areclose(z1::Number, z2::Number)
   return abs2(z1 - z2) < 4.0 * eps2 * maxmod2
 end
 
-################################# Beginning of althetas branch mods ##########################
-# Use NIST definition where q = cispi(tau)
 function _calctheta1_alt1(z::Number, q::Number)
   n = -1
   series = zero(promote_type(typeof(z), typeof(q)))
@@ -77,15 +79,15 @@ function _calctheta1_alt1(z::Number, q::Number)
   error("Reached $maxiter iterations.")
 end
 
-# Use Poisson transform of NIST definition:
-"""
-    _calctheta1_alt2(zopi::Number, topi::Number)
-Calculate the Jacobian elliptic theta function θ₁ using the Poisson summation
-formula.  Most useful for 0 < Im(tau) ≤ 1.3.  
-# Input Arguments:
-- `zopi`: z/π, where z is the first argument of the theta function.
-- `topi`: t/π, where t = -i*τ, and τ is the second argument of the theta function.
-"""
+# # Use Poisson transform of NIST definition:
+# """
+#     _calctheta1_alt2(zopi::Number, topi::Number)
+# Calculate the Jacobian elliptic theta function θ₁ using the Poisson summation
+# formula.  Most useful for 0 < Im(tau) ≤ 1.3.  
+# # Input Arguments:
+# - `zopi`: z/π, where z is the first argument of the theta function.
+# - `topi`: t/π, where t = -i*τ, and τ is the second argument of the theta function.
+# """
 function _calctheta1_alt2(zopi::Number, topi::Number)
   nminus = round(Int, 0.5 - real(zopi)) + 1
   nplus = nminus - 1
@@ -204,10 +206,17 @@ function _jtheta1dash(z::Number, tau::Complex)
   q = xcispi(tau)
   out = complex(0.0, 0.0)
   alt = -1.0
+  q² = q * q
+  q²ⁿ = one(q)
+  qⁿ⁽ⁿ⁺¹⁾ = one(q)
   for n = 0:3000
+    if n > 0
+      q²ⁿ *= q²
+      qⁿ⁽ⁿ⁺¹⁾ *= q²ⁿ
+    end
     alt = -alt
     k = 2.0 * n + 1.0
-    outnew = out + alt * q^(n * (n + 1)) * k * cos(k * z)
+    outnew = out + alt * qⁿ⁽ⁿ⁺¹⁾ * k * cos(k * z)
     if areclose(out, outnew)
       return 2 * sqrt(isqrt(q)) * out
     end
@@ -356,7 +365,7 @@ First Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function jtheta1(z, tau::Complex)
-  @assert imag(tau) > 0 "Invalid `tau`."
+  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
   return _jtheta1.(z, tau)
 end
 
@@ -370,7 +379,7 @@ Logarithm of the second Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function ljtheta2(z, tau::Complex)
-  @assert imag(tau) > 0 "Invalid `tau`."
+  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
   return _ljtheta2.(z, tau)
 end
 
@@ -384,7 +393,7 @@ Second Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function jtheta2(z, tau::Complex)
-  @assert imag(tau) > 0 "Invalid `tau`."
+  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
   return _jtheta2.(z, tau)
 end
 
@@ -398,7 +407,7 @@ Logarithm of the third Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function ljtheta3(z, tau::Complex)
-  @assert imag(tau) > 0 "Invalid `tau`."
+  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
   return _ljtheta3.(z, tau)
 end
 
@@ -412,7 +421,7 @@ Third Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function jtheta3(z, tau::Complex)
-  @assert imag(tau) > 0 "Invalid `tau`."
+  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
   return _jtheta3.(z, tau)
 end
 
@@ -426,7 +435,7 @@ Logarithm of the fourth Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function ljtheta4(z, tau::Complex)
-  @assert imag(tau) > 0 "Invalid `tau`."
+  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
   return _ljtheta4.(z, tau)
 end
 
@@ -440,7 +449,7 @@ Fourth Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function jtheta4(z, tau::Complex)
-  @assert imag(tau) > 0 "Invalid `tau`."
+  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
   return _jtheta4.(z, tau)
 end
 
@@ -454,7 +463,7 @@ Derivative of the first Jacobi theta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function jtheta1dash(z, tau::Complex)
-  @assert imag(tau) > 0 "Invalid `tau`."
+  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
   return _jtheta1dash.(z, tau)
 end
 
@@ -467,7 +476,7 @@ Dedekind eta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function etaDedekind(tau::Complex)
-  @assert imag(tau) > 0 "Invalid `tau`."
+  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
   return _etaDedekind(tau)
 end
 
@@ -480,7 +489,7 @@ Lambda modular function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function lambda(tau::Complex)
-  @assert imag(tau) > 0 "Invalid `tau`."
+  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
   return (_jtheta2(0, tau) / _jtheta3(0, tau))^4
 end
 
@@ -493,7 +502,7 @@ Klein j-invariant function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function kleinj(tau::Complex)
-  @assert imag(tau) > 0 "Invalid `tau`."
+  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
   lbd = (_jtheta2(0, tau) / _jtheta3(0, tau))^4
   x = lbd * (1.0 - lbd)
   return 256 * (1-x)^3 / x^2
@@ -802,6 +811,86 @@ function ellipticE(m::Number)
 end
 
 """
+    ellipticZ(phi, m)
+
+Jacobi Zeta function.
+
+# Arguments
+- `phi`: complex number, the amplitude
+- `m`: complex number, the squared modulus
+"""
+function ellipticZ(phi::Number, m::Number)
+  if isinf(real(m)) && imag(m) == 0
+    return NaN
+  end
+  if m == 1
+    rl = real(phi)
+    if abs(rl) <= pi/2
+      return sin(phi)
+    end
+    if rl > pi/2
+      k = ceil(rl/pi - 0.5)
+      return sin(phi - k*pi)
+    end
+    k = -floor(0.5 - rl/pi)
+    return sin(phi - k*pi)
+  end
+  return ellipticE(phi, m) - ellipticE(m)/ellipticK(m) * ellipticF(phi, m)
+end
+
+"""
+    ellipticPI(phi, n, m)
+
+Incomplete elliptic integral of first kind.
+
+# Arguments
+- `phi`: complex number, the amplitude
+- `n`: complex number, the characteristic
+- `m`: complex number, the squared modulus
+"""
+function ellipticPI(phi::Number, n::Number, m::Number)
+  if phi == 0 || (isinf(real(m)) && imag(m) == 0) ||
+      (isinf(real(n)) && imag(n) == 0)
+    return 0.0
+  end
+  if phi == pi/2 && m == 1 && imag(n) == 0 && n != 1
+    return real(n) > 1 ? -Inf : Inf
+  end
+  if phi == pi/2 && n == 1
+    return NaN
+  end
+  if phi == pi/2 && m == 0 
+    return pi / 2 / isqrt(1-n)
+  end
+  if phi == pi/2 && n == m
+    return ellipticE(m) / (1-m)
+  end
+  if phi == pi/2 && n == 0
+    return ellipticK(m)
+  end
+  rl = real(phi)
+  if rl >= -pi/2 && rl <= pi/2
+    sine = sin(phi)
+    if isinf(sine)
+      error("`sin(phi)` is not finite.")
+    end
+    sine2 = sine*sine
+    cosine2 = 1 - sine2
+    oneminusmsine2 = 1 - m*sine2
+    return sine * (CarlsonRF(cosine2, oneminusmsine2, 1) +
+             n * sine2 * CarlsonRJ(cosine2, oneminusmsine2, 1, 1-n*sine2) / 3)
+  end
+  if rl > pi/2
+    k = ceil(rl/pi - 0.5)
+    phi = phi - k*pi
+    return 2*k*ellipticPI(pi/2, n, m) + ellipticPI(phi, n, m)
+  end
+  k = -floor(0.5 - rl/pi)
+  phi = phi - k*pi
+  return 2*k*ellipticPI(pi/2, n, m) + ellipticPI(phi, n, m)
+end
+
+"""
     agm(x, y)
 
 Arithmetic-geometric mean.
@@ -848,8 +937,8 @@ Eisenstein E-series of weight 2.
 - `q`: nome, complex number; it must not be a negative real number and its modulus must be strictly smaller than 1
 """
 function EisensteinE2(q::Number)
-  @assert abs(q) < 1 "Invalid `q`."
-  @assert imag(q) != 0 || real(q) > 0 "Invalid `q`."
+  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
+  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
   tau = -1im * log(q) / pi / 2.0
   return _EisensteinE2(tau)
 end
@@ -863,10 +952,49 @@ Eisenstein E-series of weight 4.
 - `q`: nome, complex number; it must not be a negative real number and its modulus must be strictly smaller than 1
 """
 function EisensteinE4(q::Number)
-  @assert abs(q) < 1 "Invalid `q`."
-  @assert imag(q) != 0 || real(q) > 0 "Invalid `q`."
+  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
+  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
   tau = -1im * log(q) / pi / 2.0
   return (_jtheta2(0, tau)^8 + _jtheta3(0, tau)^8 + _jtheta4(0, tau)^8) / 2.0
+end
+
+"""
+    halfPeriods(g2, g3)
+
+Half-periods ``\\omega_1`` and ``\\omega_2`` from the elliptic invariants.
+
+# Arguments
+- `g2`,`g3`: the Weierstrass elliptic invariants, complex numbers
+"""
+function halfPeriods(g2::Number, g3::Number)
+  g2cube = g2*g2*g2
+  j = 1728 * g2cube / (g2cube - 27*g3*g3)
+  if isinf(j)
+    return (-1im*pi/2/sqrt(3), complex(Inf, Inf))
+  end
+  tau = kleinjinv(j)
+  omega1 = 1im * pi * sqrt(isqrt(1.0 / g2 / 12 * _E4(tau)))
+  return (omega1, tau*omega1)
+end
+
+"""
+    ellipticInvariants(omega1, omega2)
+
+Weierstrass elliptic invariants ``g_1`` and ``g_2`` from the half-periods.
+
+# Arguments
+- `omega1`,`omega2`: the Weierstrass half periods, complex numbers
+"""
+function ellipticInvariants(omega1::Number, omega2::Number)
+  tau = omega2 / omega1
+  @assert imag(tau) > 0 ArgumentError("Invalid pair `(omega1, omega2)`.")
+  j2 = _jtheta2_raw(0, tau)
+  j3 = _jtheta3_raw(0, tau)
+  g2 = 4/3 * (pi/2/omega1)^4 * (j2^8 - (j2*j3)^4 + j3^8)
+  g3 = 8/27 * (pi/2/omega1)^6 * (j2^12 - (
+      (3/2 * j2^8 * j3^4) + (3/2 * j2^4 * j3^8)
+    ) + j3^12)
+  return (g2, g3)
 end
 
 """
@@ -883,11 +1011,11 @@ Weierstrass p-function. One and only one of the parameters `tau`, `omega` or `g`
 """
 function wp(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing, g::Union{Missing,Tuple{Number,Number}}=missing, derivative::Int64=0)
   local omega1, weier, weierPrime
-  @assert derivative >= 0 && derivative <= 3 ArgumentError("`derivative` must be beetween 0 and 3.")
+  @assert derivative >= 0 && derivative <= 3 ArgumentError("`derivative` must be between 0 and 3.")
   nmissing = ismissing(tau) + ismissing(omega) + ismissing(g)
   @assert nmissing == 2 ArgumentError("You must supply either `tau`, `omega` or `g`.")
   if !ismissing(tau)
-    @assert imag(tau) > 0 "Invalid `tau`."
+    @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
     if derivative != 1
       weier = _wpFromTau(z, tau)
       if derivative == 0
@@ -903,7 +1031,7 @@ function wp(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Nu
   if !ismissing(omega)
     omega1, omega2 = omega
     tau = omega2/omega1
-    @assert imag(tau) > 0 "Invalid `omega`."
+    @assert imag(tau) > 0 ArgumentError("Invalid `omega`.")
     if derivative != 1
       weier = _wpFromTau(z/omega1/2, tau) / omega1 / omega1 / 4
       if derivative == 0
@@ -946,17 +1074,17 @@ Weierstrass sigma-function. One and only one of the parameters `tau`, `omega` or
 - `omega`: half-periods, a pair of complex numbers
 - `g`: elliptic invariants, a pair of complex numbers
 """
-function wsigma(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing, g::Union{Missing,Tuple{Number,Number}}=missing)
+function wsigma(z; tau::Union{Missing,Complex}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing, g::Union{Missing,Tuple{Number,Number}}=missing)
   local omega1
   nmissing = ismissing(tau) + ismissing(omega) + ismissing(g)
   @assert nmissing == 2 ArgumentError("You must supply either `tau`, `omega` or `g`.")
   if !ismissing(tau)
-    @assert imag(tau) > 0 "Invalid `tau`."
+    @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
     omega1 = 0.5
   elseif !ismissing(omega)
     omega1 = omega[1]
     tau = omega[2]/omega1
-    @assert imag(tau) > 0 "Invalid `omega`."
+    @assert imag(tau) > 0 ArgumentError("Invalid `omega`.")
   elseif !ismissing(g)
     omega1, tau = _omega1_and_tau(g)
   end
@@ -978,20 +1106,20 @@ Weierstrass zeta-function. One and only one of the parameters `tau`, `omega` or 
 - `omega`: half-periods, a pair of complex numbers
 - `g`: elliptic invariants, a pair of complex numbers
 """
-function wzeta(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing, g::Union{Missing,Tuple{Number,Number}}=missing)
+function wzeta(z; tau::Union{Missing,Complex}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing, g::Union{Missing,Tuple{Number,Number}}=missing)
   local omega1, omega2
   nmissing = ismissing(tau) + ismissing(omega) + ismissing(g)
   @assert nmissing == 2 ArgumentError("You must supply either `tau`, `omega` or `g`.")
   if !ismissing(tau) || !ismissing(omega)
     if !ismissing(tau)
-      @assert imag(tau) > 0 "Invalid `tau`."
+      @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
       omega1 = 0.5
       omega2 = tau / 2
     elseif !ismissing(omega)
       omega1 = omega[1]
       omega2 = omega[2]
       tau = omega[2]/omega1
-      @assert imag(tau) > 0 "Invalid `omega`."
+      @assert imag(tau) > 0 ArgumentError("Invalid `omega`.")
     end
     if omega1 == Inf && omega2 == 1im*Inf # i.e. g2=0 g3=0
       return 1 ./ z
