@@ -321,3 +321,27 @@ end
   )
 end
 
+@testset "Half-periods and elliptic invariants" begin
+  x = gamma(1/4)^2 / 4 / sqrt(pi)
+  g2, g3 = ellipticInvariants(x, im * x)
+  @test isapprox(
+    g2,
+    1
+  )
+  @test isapprox(
+    g3,
+    0;
+    atol = 1e-15
+  )
+  omega1, omega2 = halfPeriods(1, 0)
+  g2, g3 = ellipticInvariants(omega1, omega2)
+  @test isapprox(
+    g2,
+    1
+  )
+  @test isapprox(
+    g3,
+    0;
+    atol = 1e-15
+  )
+end

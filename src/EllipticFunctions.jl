@@ -26,6 +26,8 @@ export ellipticPI
 export agm
 export EisensteinE2
 export EisensteinE4
+export halfPeriods
+export ellipticInvariants
 export wp
 export wsigma
 export wzeta
@@ -954,6 +956,45 @@ function EisensteinE4(q::Number)
   @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
   tau = -1im * log(q) / pi / 2.0
   return (_jtheta2(0, tau)^8 + _jtheta3(0, tau)^8 + _jtheta4(0, tau)^8) / 2.0
+end
+
+"""
+    halfPeriods(g2, g3)
+
+Half-periods ``\\omega_1`` and ``\\omega_2`` from the elliptic invariants.
+
+# Arguments
+- `g2`,`g3`: the Weierstrass elliptic invariants, complex numbers
+"""
+function halfPeriods(g2::Number, g3::Number)
+  g2cube = g2*g2*g2
+  j = 1728 * g2cube / (g2cube - 27*g3*g3)
+  if isinf(j)
+    return (-1im*pi/2/sqrt(3), complex(Inf, Inf))
+  end
+  tau = kleinjinv(j)
+  omega1 = 1im * pi * sqrt(isqrt(1.0 / g2 / 12 * _E4(tau)))
+  return (omega1, tau*omega1)
+end
+
+"""
+    ellipticInvariants(omega1, omega2)
+
+Weierstrass elliptic invariants ``g_1`` and ``g_2`` from the half-periods.
+
+# Arguments
+- `omega1`,`omega2`: the Weierstrass half periods, complex numbers
+"""
+function ellipticInvariants(omega1::Number, omega2::Number)
+  tau = omega2 / omega1
+  @assert imag(tau) > 0 ArgumentError("Invalid pair `(omega1, omega2)`.")
+  j2 = _jtheta2_raw(0, tau)
+  j3 = _jtheta3_raw(0, tau)
+  g2 = 4/3 * (pi/2/omega1)^4 * (j2^8 - (j2*j3)^4 + j3^8)
+  g3 = 8/27 * (pi/2/omega1)^6 * (j2^12 - (
+      (3/2 * j2^8 * j3^4) + (3/2 * j2^4 * j3^8)
+    ) + j3^12)
+  return (g2, g3)
 end
 
 """
