@@ -20,6 +20,8 @@ using Test
     jtheta4(1 + 1im, 1im),
     1.1351891564632007 + 0.28517396444192509im
   )
+  @test real(jtheta1(1-1im, 1.e-13*im)) == -Inf
+  @test imag(jtheta1(1-1im, 1.e-13*im)) == Inf
 end
 
 @testset "A value of jtheta1dash." begin
