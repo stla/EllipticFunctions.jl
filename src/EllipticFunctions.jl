@@ -644,7 +644,7 @@ function CarlsonRJ(x::Number, y::Number, z::Number, p::Number)
   fac = 1
   d = Vector{Complex}(undef, 0)
   e = Vector{Complex}(undef, 0)
-  epsilon = 10 * eps()
+  epsilon = 1 * eps()^3
   Q = (4 / epsilon)^(1/3) * max(abs2(A-x), abs2(A-y), abs2(A-z), abs2(A-p))
   x = Complex(x)
   y = Complex(y)
@@ -680,7 +680,7 @@ function CarlsonRJ(x::Number, y::Number, z::Number, p::Number)
   g = (1 - 3*E2/14 + E3/6 + 9*E2*E2/88 - 3*E4/22 - 9*E2*E3/52 + 3*E5/26) /
     f / A / sqrt(A)
   return length(e) > 1 ? 
-    (6 * sum(ifelse.(e .== 0, Complex(1.0), atan.(sqrt.(e)) / sqrt.(e) ) ./ d)) : 
+    (6 * sum(ifelse.(e .== 0, Complex(1.0), atan.(sqrt.(e)) ./ sqrt.(e) ) ./ d)) : 
     Complex(0.0)
 end
 
