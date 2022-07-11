@@ -5,3 +5,5 @@
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://stla.github.io/Jacobi.jl)
 
 ![](https://raw.githubusercontent.com/stla/jacobi/main/inst/images/jellip_cn_1-16.png)
+
+![](https://raw.githubusercontent.com/stla/jacobi/main/inst/images/ball_cn.gif)
