@@ -1,6 +1,6 @@
 name = "EllipticFunctions"
 uuid = "6a4e32cb-b31a-4929-85af-fb29d9a80738"
-authors = ["Stéphane Laurent <laurent_step@outlook.fr>"]
+authors = ["Stéphane Laurent <laurent_step@outlook.fr>", "Peter Simon"]
 version = "0.1.0"
 
 [deps]
