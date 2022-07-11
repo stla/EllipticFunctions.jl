@@ -77,7 +77,31 @@ end
   )
 end
 
-@testset "A value of ellipticE." begin
+@testset "ellipticK and CarlsonRF." begin
+  m = 2 - 3im
+  @test isapprox(
+    ellipticK(m),
+    CarlsonRF(0, 1-m, 1)
+  )
+end
+
+@testset "Complete ellipticE and CarlsonRG." begin
+  m = 2 - 3im
+  @test isapprox(
+    ellipticE(m),
+    2*CarlsonRG(0, 1-m, 1)
+  )
+end
+
+@testset "Complete ellipticE and CarlsonRD." begin
+  m = 2 - 3im
+  @test isapprox(
+    ellipticE(m),
+    (1-m) * (CarlsonRD(0, 1-m, 1) + CarlsonRD(0, 1, 1-m)) / 3
+  )
+end
+
+@testset "A value of complete ellipticE." begin
   @test isapprox(
     ellipticE(0.5),
     (2 * gamma(3/4)^4 + pi^2) / (4 * sqrt(pi) * gamma(3/4)^2)

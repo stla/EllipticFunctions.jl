@@ -50,8 +50,6 @@ function areclose(z1::Number, z2::Number)
   return abs2(z1 - z2) < 4.0 * eps2 * maxmod2
 end
 
-################################# Beginning of althetas branch mods ##########################
-# Use NIST definition where q = cispi(tau)
 function _calctheta1_alt1(z::Number, q::Number)
   n = -1
   series = zero(promote_type(typeof(z), typeof(q)))
@@ -77,15 +75,15 @@ function _calctheta1_alt1(z::Number, q::Number)
   error("Reached $maxiter iterations.")
 end
 
-# Use Poisson transform of NIST definition:
-"""
-    _calctheta1_alt2(zopi::Number, topi::Number)
-Calculate the Jacobian elliptic theta function θ₁ using the Poisson summation
-formula.  Most useful for 0 < Im(tau) ≤ 1.3.  
-# Input Arguments:
-- `zopi`: z/π, where z is the first argument of the theta function.
-- `topi`: t/π, where t = -i*τ, and τ is the second argument of the theta function.
-"""
+# # Use Poisson transform of NIST definition:
+# """
+#     _calctheta1_alt2(zopi::Number, topi::Number)
+# Calculate the Jacobian elliptic theta function θ₁ using the Poisson summation
+# formula.  Most useful for 0 < Im(tau) ≤ 1.3.  
+# # Input Arguments:
+# - `zopi`: z/π, where z is the first argument of the theta function.
+# - `topi`: t/π, where t = -i*τ, and τ is the second argument of the theta function.
+# """
 function _calctheta1_alt2(zopi::Number, topi::Number)
   nminus = round(Int, 0.5 - real(zopi)) + 1
   nplus = nminus - 1
