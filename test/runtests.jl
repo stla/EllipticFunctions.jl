@@ -48,6 +48,52 @@ end
   )
 end
 
+@testset "CarlsonRC and 'arc' functions." begin
+  x = 1 + im
+  y = 3
+  @test isapprox(
+    x * CarlsonRC(y*y, y*y-x*x),
+    atanh(x/y)
+  )
+  @test isapprox(
+    x * CarlsonRC(y*y-x*x, y*y),
+    asin(x/y)
+  )
+  @test isapprox(
+    x * CarlsonRC(y*y+x*x, y*y),
+    asinh(x/y)
+  )
+  @test isapprox(
+    sqrt(y*y-x*x) * CarlsonRC(x*x, y*y),
+    acos(x/y)
+  )
+  @test isapprox(
+    sqrt(x*x-y*y)*CarlsonRC(x*x, y*y),
+    acosh(x/y)
+  )
+  y = -5 + 2im
+  @test isapprox(
+    x * CarlsonRC(y*y, y*y-x*x),
+    -atanh(x/y)
+  )
+  @test isapprox(
+    x * CarlsonRC(y*y-x*x, y*y),
+    -asin(x/y)
+  )
+  @test isapprox(
+    x * CarlsonRC(y*y+x*x, y*y),
+    -asinh(x/y)
+  )
+  @test isapprox(
+    sqrt(y*y-x*x) * CarlsonRC(x*x, y*y),
+    acos(-x/y)
+  )
+  @test isapprox(
+    sqrt(x*x-y*y) * CarlsonRC(x*x, y*y),
+    acosh(-x/y)
+  )
+end
+
 @testset "CarlsonRJ homogeneity." begin
   x = 1 + im
   y = -2 + 3im
