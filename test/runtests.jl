@@ -154,6 +154,38 @@ end
   )
 end
 
+@testset "Symmetry of ellipticZ." begin
+  phi = -5 + 3im
+  m = -4 - 9im
+  @test isapprox(
+    ellipticZ(conj(phi), conj(m)),
+    conj(ellipticZ(phi, m))
+  )
+end
+
+@testset "Symmetry of ellipticZ." begin
+  phi = -5 + 3im
+  m = -4 - 9im
+  @test isapprox(
+    ellipticZ(conj(phi), conj(m)),
+    conj(ellipticZ(phi, m))
+  )
+end
+
+@testset "Relation ellipticZ/PI/E/K." begin
+  phi = 7 - 6im
+  m = -3
+  @test isapprox(
+    ellipticZ(phi, m),
+    (1-m)*ellipticPI(phi, m, m) + m*sin(2*phi)/2/sqrt(1-m*sin(phi)^2) -
+      ellipticE(m) / ellipticK(m) * ellipticPI(phi, 0, m)
+  )
+end
+
+
+
+
+
 @testset "A value of agm." begin
   @test isapprox(
     agm(1, sqrt(2)),

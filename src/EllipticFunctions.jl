@@ -18,9 +18,11 @@ export CarlsonRC
 export CarlsonRD
 export CarlsonRG
 export CarlsonRJ
+export ellipticE
 export ellipticF
 export ellipticK
-export ellipticE
+export ellipticZ
+export ellipticPI
 export agm
 export EisensteinE2
 export EisensteinE4
@@ -798,6 +800,87 @@ Complete elliptic integral of the second kind.
 function ellipticE(m::Number)
   return ellipticE(pi/2, m)
 end
+
+"""
+    ellipticZ(phi, m)
+
+Jacobi Zeta function.
+
+# Arguments
+- `phi`: complex number, the amplitude
+- `m`: complex number, the squared modulus
+"""
+function ellipticZ(phi::Number, m::Number)
+  if isinf(real(m)) && imag(m) == 0
+    return NaN
+  end
+  if m == 1
+    rl = real(phi)
+    if abs(rl) <= pi/2
+      return sin(phi)
+    end
+    if rl > pi/2
+      k = ceil(rl/pi - 0.5)
+      return sin(phi - k*pi)
+    end
+    k = -floor(0.5 - rl/pi)
+    return sin(phi - k*pi)
+  end
+  return ellipticE(phi, m) - ellipticE(m)/ellipticK(m) * ellipticF(phi, m)
+end
+
+"""
+    ellipticPI(phi, n, m)
+
+Incomplete elliptic integral of first kind.
+
+# Arguments
+- `phi`: complex number, the amplitude
+- `n`: complex number, the characteristic
+- `m`: complex number, the squared modulus
+"""
+function ellipticPI(phi::Number, n::Number, m::Number)
+  if phi == 0 || (isinf(real(m)) && imag(m) == 0) ||
+      (isinf(real(n)) && imag(n) == 0)
+    return 0.0
+  end
+  if phi == pi/2 && m == 1 && imag(n) == 0 && n != 1
+    return real(n) > 1 ? -Inf : Inf
+  end
+  if phi == pi/2 && n == 1
+    return NaN
+  end
+  if phi == pi/2 && m == 0 
+    return pi / 2 / isqrt(1-n)
+  end
+  if phi == pi/2 && n == m
+    return ellipticE(m) / (1-m)
+  end
+  if phi == pi/2 && n == 0
+    return ellipticK(m)
+  end
+  rl = real(phi)
+  if rl >= -pi/2 && rl <= pi/2
+    sine = sin(phi)
+    if isinf(sine)
+      error("`sin(phi)` is not finite.")
+    end
+    sine2 = sine*sine
+    cosine2 = 1 - sine2
+    oneminusmsine2 = 1 - m*sine2
+    return sine * (CarlsonRF(cosine2, oneminusmsine2, 1) +
+             n * sine2 * CarlsonRJ(cosine2, oneminusmsine2, 1, 1-n*sine2) / 3)
+  end
+  if rl > pi/2
+    k = ceil(rl/pi - 0.5)
+    phi = phi - k*pi
+    return 2*k*ellipticPI(pi/2, n, m) + ellipticPI(phi, n, m)
+  end
+  k = -floor(0.5 - rl/pi)
+  phi = phi - k*pi
+  return 2*k*ellipticPI(pi/2, n, m) + ellipticPI(phi, n, m)
+end
+
 
 """
     agm(x, y)
