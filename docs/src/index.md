@@ -59,8 +59,11 @@ etaDedekind
 lambda
 kleinj
 kleinjinv
-CarlsonRF
+CarlsonRC
 CarlsonRD
+CarlsonRF
+CarlsonRG
+CarlsonRJ
 ellipticF
 ellipticK
 ellipticE
@@ -75,6 +78,7 @@ thetaD
 thetaN
 thetaS
 jellip
+am
 ```
 
 ## Index
