@@ -182,9 +182,15 @@ end
   )
 end
 
-
-
-
+@testset "ellipticPI with n=1." begin
+  phi = 1 + im
+  m = 2 - im
+  @test isapprox(
+    ellipticPI(phi, 1, m),
+    (sqrt(1-m*sin(phi)^2) * tan(phi) - ellipticE(phi,m)) / (1-m) +
+      ellipticF(phi, m)
+  )
+end
 
 @testset "A value of agm." begin
   @test isapprox(
