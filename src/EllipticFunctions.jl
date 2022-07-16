@@ -46,14 +46,14 @@ function isqrt(x::Number)
   return sqrt(Complex(x))
 end
 
-function areclose(z1::Number, z2::Number)
+function areclose(z1::S, z2::S) where {T <: Real, S <: Union{T, Complex{T}}}
   z1 == z2 && (return true)
-  eps2 = eps()^2
+  eps2 = eps(T)^2
   mod2_z2 = abs2(z2)
   maxmod2 = (mod2_z2 < eps2) ? 1.0 : max(abs2(z1), mod2_z2)
   return abs2(z1 - z2) < 4.0 * eps2 * maxmod2
 end
-
+  
 function _calctheta1_alt1(z::Number, q::Number)
   n = -1
   series = zero(promote_type(typeof(z), typeof(q)))
