@@ -199,6 +199,16 @@ end
   )
 end
 
+@testset "Extended Precision ellipticF" begin
+    setprecision(512) do
+        phi = parse(BigFloat, "0.15")
+        m = parse(BigFloat, "0.81")
+        I = ellipticF(phi, m)
+        IWolfram = parse(BigFloat, "0.15045731627390324557125914235016372659553548570625738854307684752660195708464381473254355631857978043355122247940117341312349152469759997869058851217919643931")
+        @test abs(I - IWolfram) < 1e-154
+    end
+end
+
 @testset "A value of agm." begin
   @test isapprox(
     agm(1, sqrt(2)),

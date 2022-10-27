@@ -516,16 +516,14 @@ Carlson 'RF' integral.
 # Arguments
 - `x`,`y`,`z`: complex numbers; at most one of them can be zero
 """
-function CarlsonRF(x::Number, y::Number, z::Number)
+function CarlsonRF(xin::Number, yin::Number, zin::Number)
   local A
-  xzero = x == 0
-  yzero = y == 0
-  zzero = z == 0
+  (xzero, yzero, zzero) = iszero.((xin, yin, zin))
+  (x, y, z, _) = promote(xin, yin, zin, 1.0)
+  T = real(typeof(x))
   @assert xzero + yzero + zzero <= 1 ArgumentError("At most one of `x`, `y`, `z` can be 0.")
-  dx = typemax(Float64)
-  dy = typemax(Float64)
-  dz = typemax(Float64)
-  epsilon = 10.0 * eps()^2
+  dx = dy = dz = typemax(T)
+  epsilon = 10.0 * eps(T)^2
   while dx > epsilon || dy > epsilon || dz > epsilon
     lambda = isqrt(x)*isqrt(y) + isqrt(y)*isqrt(z) + isqrt(z)*isqrt(x)
     x = (x + lambda) / 4.0
