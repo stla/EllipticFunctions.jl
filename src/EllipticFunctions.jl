@@ -42,7 +42,7 @@ function xcispi(x)
     return exp(1im * pi * x)
 end
 
-function isqrt(x::Number)
+function csqrt(x::Number)
   return sqrt(Complex(x))
 end
 
@@ -218,7 +218,7 @@ function _jtheta1dash(z::Number, tau::Complex)
     k = 2.0 * n + 1.0
     outnew = out + alt * qⁿ⁽ⁿ⁺¹⁾ * k * cos(k * z)
     if areclose(out, outnew)
-      return 2 * sqrt(isqrt(q)) * out
+      return 2 * sqrt(csqrt(q)) * out
     end
     out = outnew
   end
@@ -525,7 +525,7 @@ function CarlsonRF(x::Number, y::Number, z::Number)
   dx = dy = dz = typemax(T)
   epsilon = 10.0 * eps(T)^2
   while dx > epsilon || dy > epsilon || dz > epsilon
-    lambda = isqrt(xx)*isqrt(yy) + isqrt(yy)*isqrt(zz) + isqrt(zz)*isqrt(xx)
+    lambda = csqrt(xx)*csqrt(yy) + csqrt(yy)*csqrt(zz) + csqrt(zz)*csqrt(xx)
     xx = (xx + lambda) / 4.0
     yy = (yy + lambda) / 4.0
     zz = (zz + lambda) / 4.0
@@ -574,8 +574,8 @@ function CarlsonRD(x::Number, y::Number, z::Number)
   s = complex(0.0, 0.0)
   fac = complex(1.0, 0.0)
   while dx > epsilon || dy > epsilon || dz > epsilon
-    lambda = isqrt(x)*isqrt(y) + isqrt(y)*isqrt(z) + isqrt(z)*isqrt(x)
-    s = s + fac/(isqrt(z) * (z + lambda))
+    lambda = csqrt(x)*csqrt(y) + csqrt(y)*csqrt(z) + csqrt(z)*csqrt(x)
+    s = s + fac/(csqrt(z) * (z + lambda))
     fac = fac / 4.0
     x = (x + lambda) / 4.0
     y = (y + lambda) / 4.0
@@ -619,14 +619,14 @@ function CarlsonRG(x::Number, y::Number, z::Number)
     return complex(0.0, 0.0)
   end
   if nzeros == 2
-    return isqrt(x + y + z) / 2
+    return csqrt(x + y + z) / 2
   end
   if zzero
     return CarlsonRG(y, z, x)
   end
   return (z * CarlsonRF(x, y, z) - 
     (x - z) * (y - z) * CarlsonRD(x, y, z) / 3 + 
-    isqrt(x) * isqrt(y) / isqrt(z)) / 2
+    csqrt(x) * csqrt(y) / csqrt(z)) / 2
 end
 
 """
@@ -708,7 +708,7 @@ function ellipticF(phi::Number, m::Number)
   rphi = real(phi)
   if rphi == 0 && imag(phi) == Inf && imag(m) == 0 && real(m) > 0 && real(m) < 1
     return sign(imag(phi)) *
-        (ellipticF(pi/2, m) - ellipticF(pi/2, 1/m) / isqrt(m))
+        (ellipticF(pi/2, m) - ellipticF(pi/2, 1/m) / csqrt(m))
   end
   if abs(rphi) == pi/2 && m == 1
     return complex(NaN, NaN)
@@ -858,7 +858,7 @@ function ellipticPI(phi::Number, n::Number, m::Number)
     return NaN
   end
   if phi == pi/2 && m == 0 
-    return pi / 2 / isqrt(1-n)
+    return pi / 2 / csqrt(1-n)
   end
   if phi == pi/2 && n == m
     return ellipticE(m) / (1-m)
@@ -919,7 +919,7 @@ function kleinjinv(j::Number)
     j2 = j * j
     j3 = j2 * j
     t = (-j3 + 2304 * j2 + 12288 *
-          isqrt(3 * (1728 * j2 - j3)) - 884736 * j)^(1/3)
+          csqrt(3 * (1728 * j2 - j3)) - 884736 * j)^(1/3)
     x = 1/768 * t - (1536 * j - j2) / (768 * t) + (1 - j/768)
   end
   lbd = -(-1 - sqrt(1 - 4*x)) / 2
@@ -971,7 +971,7 @@ function halfPeriods(g2::Number, g3::Number)
     return (-1im*pi/2/sqrt(3), complex(Inf, Inf))
   end
   tau = kleinjinv(j)
-  omega1 = 1im * pi * sqrt(isqrt(1.0 / g2 / 12 * _E4(tau)))
+  omega1 = 1im * pi * sqrt(csqrt(1.0 / g2 / 12 * _E4(tau)))
   return (omega1, tau*omega1)
 end
 
