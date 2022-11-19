@@ -518,23 +518,21 @@ Carlson 'RF' integral.
 """
 function CarlsonRF(x::Number, y::Number, z::Number)
   local A
-  xzero = x == 0
-  yzero = y == 0
-  zzero = z == 0
+  (xzero, yzero, zzero) = iszero.((x, y, z))
+  (xx, yy, zz, _) = promote(x, y, z, 1.0)
+  T = real(typeof(xx))
   @assert xzero + yzero + zzero <= 1 ArgumentError("At most one of `x`, `y`, `z` can be 0.")
-  dx = typemax(Float64)
-  dy = typemax(Float64)
-  dz = typemax(Float64)
-  epsilon = 10.0 * eps()^2
+  dx = dy = dz = typemax(T)
+  epsilon = 10.0 * eps(T)^2
   while dx > epsilon || dy > epsilon || dz > epsilon
-    lambda = isqrt(x)*isqrt(y) + isqrt(y)*isqrt(z) + isqrt(z)*isqrt(x)
-    x = (x + lambda) / 4.0
-    y = (y + lambda) / 4.0
-    z = (z + lambda) / 4.0
-    A = (x + y + z) / 3.0
-    dx = abs2(1.0 - x/A)
-    dy = abs2(1.0 - y/A)
-    dz = abs2(1.0 - z/A)
+    lambda = isqrt(xx)*isqrt(yy) + isqrt(yy)*isqrt(zz) + isqrt(zz)*isqrt(xx)
+    xx = (xx + lambda) / 4.0
+    yy = (yy + lambda) / 4.0
+    zz = (zz + lambda) / 4.0
+    A = (xx + yy + zz) / 3.0
+    dx = abs2(1.0 - xx/A)
+    dy = abs2(1.0 - yy/A)
+    dz = abs2(1.0 - zz/A)
   end
   E2 = sqrt(dx*dy) + sqrt(dy*dz) + sqrt(dz*dx)
   E3 = sqrt(dy*dx*dz)
