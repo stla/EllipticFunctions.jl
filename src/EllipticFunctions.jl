@@ -563,27 +563,27 @@ Carlson 'RD' integral.
 """
 function CarlsonRD(x::Number, y::Number, z::Number)
   local A
-  xzero = x == 0
-  yzero = y == 0
-  zzero = z == 0
+  (xzero, yzero, zzero) = iszero.((x, y, z))
+  (xx, yy, zz, _) = promote(x, y, z, 1.0)
+  T = real(typeof(xx))
   @assert xzero + yzero + zzero <= 1 ArgumentError("At most one of `x`, `y`, `z` can be 0.")
-  dx = typemax(Float64)
-  dy = typemax(Float64)
-  dz = typemax(Float64)
-  epsilon = 10.0 * eps()^2
-  s = complex(0.0, 0.0)
-  fac = complex(1.0, 0.0)
+  dx = typemax(T)
+  dy = typemax(T)
+  dz = typemax(T)
+  epsilon = 10.0 * eps(T)^2
+  s = complex(zero(T), zero(T))
+  fac = complex(one(T), zero(T))
   while dx > epsilon || dy > epsilon || dz > epsilon
-    lambda = csqrt(x)*csqrt(y) + csqrt(y)*csqrt(z) + csqrt(z)*csqrt(x)
-    s = s + fac/(csqrt(z) * (z + lambda))
+    lambda = csqrt(xx)*csqrt(yy) + csqrt(yy)*csqrt(zz) + csqrt(zz)*csqrt(xx)
+    s = s + fac/(csqrt(zz) * (zz + lambda))
     fac = fac / 4.0
-    x = (x + lambda) / 4.0
-    y = (y + lambda) / 4.0
-    z = (z + lambda) / 4.0
-    A = (x + y + 3*z) / 5.0
-    dx = abs2(1.0 - x/A)
-    dy = abs2(1.0 - y/A)
-    dz = abs2(1.0 - z/A)
+    xx = (xx + lambda) / 4.0
+    yy = (yy + lambda) / 4.0
+    zz = (zz + lambda) / 4.0
+    A = (xx + yy + 3*zz) / 5.0
+    dx = abs2(1.0 - xx/A)
+    dy = abs2(1.0 - yy/A)
+    dz = abs2(1.0 - zz/A)
   end
   dx = sqrt(dx)
   dy = sqrt(dy)
@@ -611,12 +611,12 @@ Carlson 'RG' integral.
 """
 function CarlsonRG(x::Number, y::Number, z::Number)
   local A
-  xzero = x == 0
-  yzero = y == 0
-  zzero = z == 0
+  (xzero, yzero, zzero) = iszero.((x, y, z))
   nzeros = xzero + yzero + zzero
+  (xx, yy, zz, _) = promote(x, y, z, 1.0)
+  T = real(typeof(xx))
   if nzeros == 3
-    return complex(0.0, 0.0)
+    return complex(zero(T), zero(T))
   end
   if nzeros == 2
     return csqrt(x + y + z) / 2
@@ -638,47 +638,46 @@ Carlson 'RJ' integral.
 - `x`,`y`,`z`,`p`: complex numbers; at most one of them can be zero
 """
 function CarlsonRJ(x::Number, y::Number, z::Number, p::Number)
-  xzero = x == 0
-  yzero = y == 0
-  zzero = z == 0
-  pzero = p == 0
+  (xzero, yzero, zzero, pzero) = iszero.((x, y, z, p))
   nzeros = xzero + yzero + zzero + pzero
   @assert nzeros <= 1 ArgumentError("At most one of `x`, `y`, `z`, `p` can be 0.")
-  A0 = (x + y + z + p + p) / 5
+  (xx, yy, zz, pp, _) = promote(x, y, z, p, 1.0)
+  T = real(typeof(xx))
+  A0 = (xx + yy + zz + pp + pp) / 5
   A = A0
-  delta = (p - x) * (p - y) * (p - z)
+  delta = (pp - xx) * (pp - yy) * (pp - zz)
   f = 1
   fac = 1
   d = Vector{Complex}(undef, 0)
   e = Vector{Complex}(undef, 0)
-  epsilon = 1 * eps()^3
-  Q = (4 / epsilon)^(1/3) * max(abs2(A-x), abs2(A-y), abs2(A-z), abs2(A-p))
-  x = Complex(x)
-  y = Complex(y)
-  z = Complex(z)
-  p = Complex(p)
+  epsilon = 1 * eps(T)^3
+  Q = (4 / epsilon)^(1/3) * max(abs2(A-xx), abs2(A-yy), abs2(A-zz), abs2(A-pp))
+  xx = Complex(xx)
+  yy = Complex(yy)
+  zz = Complex(zz)
+  pp = Complex(pp)
   while abs2(A) <= Q
-    sqrt_x = sqrt(x)
-    sqrt_y = sqrt(y)
-    sqrt_z = sqrt(z)
-    sqrt_p = sqrt(p)
+    sqrt_x = sqrt(xx)
+    sqrt_y = sqrt(yy)
+    sqrt_z = sqrt(zz)
+    sqrt_p = sqrt(pp)
     dnew = (sqrt_p + sqrt_x) * (sqrt_p + sqrt_y) * (sqrt_p + sqrt_z)
     d = vcat(d, dnew * f)
     e = vcat(e, fac * delta / dnew / dnew)
     f = f * 4
     fac = fac / 64
     lambda = sqrt_x*sqrt_y + sqrt_y*sqrt_z + sqrt_z*sqrt_x
-    x = (x + lambda) / 4
-    y = (y + lambda) / 4
-    z = (z + lambda) / 4
-    p = (p + lambda) / 4
+    xx = (xx + lambda) / 4
+    yy = (yy + lambda) / 4
+    zz = (zz + lambda) / 4
+    pp = (pp + lambda) / 4
     A = (A + lambda) / 4
     Q = Q / 16
   end
   M_1_fA = 1 / f / A
-  X = (A0-x) * M_1_fA
-  Y = (A0-y) * M_1_fA
-  Z = (A0-z) * M_1_fA
+  X = (A0-xx) * M_1_fA
+  Y = (A0-yy) * M_1_fA
+  Z = (A0-zz) * M_1_fA
   P = -(X+Y+Z) / 2
   E2 = X*Y + X*Z + Y*Z - 3*P*P
   E3 = X*Y*Z + 2*E2*P + 4*P*P*P
@@ -687,8 +686,8 @@ function CarlsonRJ(x::Number, y::Number, z::Number, p::Number)
   g = (1 - 3*E2/14 + E3/6 + 9*E2*E2/88 - 3*E4/22 - 9*E2*E3/52 + 3*E5/26) /
     f / A / sqrt(A)
   return length(e) > 1 ? 
-    (6 * sum(ifelse.(e .== 0, Complex(1.0), atan.(sqrt.(e)) ./ sqrt.(e) ) ./ d)) : 
-    Complex(0.0)
+    (6 * sum(ifelse.(e .== 0, Complex(one(T)), atan.(sqrt.(e)) ./ sqrt.(e) ) ./ d)) : 
+    Complex(zero(T))
 end
 
 """
