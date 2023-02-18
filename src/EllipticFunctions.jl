@@ -1,5 +1,7 @@
 module EllipticFunctions
 
+import SpecialFunctions
+
 export ljtheta1
 export jtheta1
 export ljtheta2
@@ -263,13 +265,18 @@ end
 
 function _omega1_and_tau(g)
   g2, g3 = g
-  g2cube = g2*g2*g2
-  j = 1728 * g2cube / (g2cube - 27*g3*g3)
-  if isinf(j)
-    return (-1im*pi/2/sqrt(3), complex(Inf, Inf))
+  if g2 == 0
+    omega1 = SpecialFunctions.gamma(1/3)^3 / 4 / pi / g3^(1/6)
+    tau    = 0.5 + 1im * sqrt(3)/2
+  else
+    g2cube = g2*g2*g2
+    j = 1728 * g2cube / (g2cube - 27*g3*g3)
+    if isinf(j)
+      return (-1im*pi/2/sqrt(3), complex(Inf, Inf))
+    end
+    tau = kleinjinv(j)
+    omega1 = 1im * pi * sqrt(sqrt(1.0 / g2 / 12 * _E4(tau)))
   end
-  tau = kleinjinv(j)
-  omega1 = 1im * pi * sqrt(sqrt(1.0 / g2 / 12 * _E4(tau)))
   return (omega1, tau)
 end
 
@@ -964,20 +971,25 @@ Half-periods ``\\omega_1`` and ``\\omega_2`` from the elliptic invariants.
 - `g2`,`g3`: the Weierstrass elliptic invariants, complex numbers
 """
 function halfPeriods(g2::Number, g3::Number)
-  g2cube = g2*g2*g2
-  j = 1728 * g2cube / (g2cube - 27*g3*g3)
-  if isinf(j)
-    return (-1im*pi/2/sqrt(3), complex(Inf, Inf))
+  if g2 == 0
+    omega1 = SpecialFunctions.gamma(1/3)^3 / 4 / pi / g3^(1/6)
+    tau    = 0.5 + 1im * sqrt(3)/2
+  else
+    g2cube = g2*g2*g2
+    j = 1728 * g2cube / (g2cube - 27*g3*g3)
+    if isinf(j)
+      return (-1im*pi/2/sqrt(3), complex(Inf, Inf))
+    end
+    tau = kleinjinv(j)
+    omega1 = 1im * pi * sqrt(csqrt(1.0 / g2 / 12 * _E4(tau)))
   end
-  tau = kleinjinv(j)
-  omega1 = 1im * pi * sqrt(csqrt(1.0 / g2 / 12 * _E4(tau)))
   return (omega1, tau*omega1)
 end
 
 """
     ellipticInvariants(omega1, omega2)
 
-Weierstrass elliptic invariants ``g_1`` and ``g_2`` from the half-periods.
+Weierstrass elliptic invariants ``g_2`` and ``g_3`` from the half-periods.
 
 # Arguments
 - `omega1`,`omega2`: the Weierstrass half periods, complex numbers
@@ -995,7 +1007,7 @@ function ellipticInvariants(omega1::Number, omega2::Number)
 end
 
 """
-    wp(z; tau, omega)
+    wp(z; tau, omega, g)
 
 Weierstrass p-function. One and only one of the parameters `tau`, `omega` or `g` must be given.
 
@@ -1061,7 +1073,7 @@ function wp(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Nu
 end
 
 """
-    wsigma(z; tau, omega)
+    wsigma(z; tau, omega, g)
 
 Weierstrass sigma-function. One and only one of the parameters `tau`, `omega` or `g` must be given.
 
@@ -1093,7 +1105,7 @@ function wsigma(z; tau::Union{Missing,Complex}=missing, omega::Union{Missing,Tup
 end
 
 """
-    wzeta(z; tau, omega)
+    wzeta(z; tau, omega, g)
 
 Weierstrass zeta-function. One and only one of the parameters `tau`, `omega` or `g` must be given.
 

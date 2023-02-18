@@ -257,6 +257,16 @@ end
   )
 end
 
+@testset "Equianharmonic wp." begin
+  omega2 = gamma(1/3)^3 / 4 / pi
+  z0     = omega2 * (1 + 1im/sqrt(3))
+  @test isapprox(
+    wp(z0; g = (0, 1)),
+    0;
+    atol = 10*eps(Float64), rtol = 0
+  )
+end
+
 @testset "A value of wsigma." begin
   omega1 = gamma(1/4)^2 / 4 / sqrt(pi)
   omega2 = 1im * omega1
