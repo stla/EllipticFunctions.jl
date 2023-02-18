@@ -134,7 +134,8 @@ function _jtheta1(z::Number, tau::Complex)
       end
     else
       # q is not real
-      out = im * _calctheta1_alt2(z / pi / tau, im / pi / tau) / alpha(z, tau)
+      out = im * _calctheta1_alt1(z / tau, exp(-im * pi / tau)) / alpha(z, tau)
+#      out = im * _calctheta1_alt2(z / pi / tau, im / pi / tau) / alpha(z, tau)
     end
   else
     # Small imag(tau) case: compute in terms of t/pi where t = -im * tau
@@ -150,7 +151,8 @@ function _jtheta1(z::Number, tau::Complex)
       end
     else
       # t is not real. No point in special casing real z here
-      out = im * _calctheta1_alt1(z / tau, exp(-im * pi / tau)) / alpha(z, tau)
+      out = im * _calctheta1_alt2(z / pi / tau, im / pi / tau) / alpha(z, tau)
+#      out = im * _calctheta1_alt1(z / tau, exp(-im * pi / tau)) / alpha(z, tau)
     end
   end
   return out
