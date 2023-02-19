@@ -265,6 +265,15 @@ function _E4(tau::Complex)
   return (_jtheta2(0, tau)^8 + _jtheta3(0, tau)^8 + _jtheta4(0, tau)^8) / 2.0
 end
 
+function _E6(tau::Complex)
+  j2 = _jtheta2(0, tau)
+  j3 = _jtheta3(0, tau)
+  j4 = _jtheta4(0, tau)
+  x3 = j3^4
+  x4 = j4^4
+  return (x3^3 + x4^3 - 3.0 * j2^8 * (x3 + x4)) / 2.0
+end
+
 function _omega1_and_tau(g)
   g2, g3 = g
   if g2 == 0
@@ -272,12 +281,18 @@ function _omega1_and_tau(g)
     tau    = 0.5 + 1im * sqrt(3)/2
   else
     g2cube = g2*g2*g2
-    j = 1728 * g2cube / (g2cube - 27*g3*g3)
+    j      = 1728 * g2cube / (g2cube - 27*g3*g3)
     if isinf(j)
       return (-1im*pi/2/sqrt(3), complex(Inf, Inf))
     end
     tau = kleinjinv(j)
-    omega1 = 1im * pi * sqrt(sqrt(1.0 / g2 / 12 * _E4(tau)))
+    if g3 == 0
+      omega1 = 1im * pi * sqrt(sqrt(1.0 / g2 / 12 * _E4(tau)))
+    else
+      G6_over_G4 = 2.0 * pi * pi / 21.0 * _E6(tau) / _E4(tau)
+      omega1     = csqrt(7.0 * G6_over_G4 * g2 / (12.0 * g3)) 
+    end
+    #omega1 = 1im * pi * sqrt(sqrt(1.0 / g2 / 12 * _E4(tau)))
   end
   return (omega1, tau)
 end
@@ -965,6 +980,21 @@ function EisensteinE4(q::Number)
 end
 
 """
+    EisensteinE6(q)
+
+Eisenstein E-series of weight 6.
+
+# Arguments
+- `q`: nome, complex number; it must not be a negative real number and its modulus must be strictly smaller than 1
+"""
+function EisensteinE6(q::Number)
+  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
+  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
+  tau = -1im * log(q) / pi / 2.0
+  return _E6(tau)
+end
+
+"""
     halfPeriods(g2, g3)
 
 Half-periods ``\\omega_1`` and ``\\omega_2`` from the elliptic invariants.
@@ -975,7 +1005,7 @@ Half-periods ``\\omega_1`` and ``\\omega_2`` from the elliptic invariants.
 function halfPeriods(g2::Number, g3::Number)
   if g2 == 0
     omega1 = SpecialFunctions.gamma(1/3)^3 / 4 / pi / g3^(1/6)
-    tau    = 0.5 + 1im * sqrt(3)/2
+    tau    = 0.5 + 1im * sqrt(3.0)/2.0
   else
     g2cube = g2*g2*g2
     j = 1728 * g2cube / (g2cube - 27*g3*g3)
@@ -983,7 +1013,13 @@ function halfPeriods(g2::Number, g3::Number)
       return (-1im*pi/2/sqrt(3), complex(Inf, Inf))
     end
     tau = kleinjinv(j)
-    omega1 = 1im * pi * sqrt(csqrt(1.0 / g2 / 12 * _E4(tau)))
+    if g3 == 0
+      omega1 = 1im * pi * sqrt(csqrt(1.0 / g2 / 12 * _E4(tau)))
+    else 
+      G6_over_G4 = 2.0 * pi * pi / 21.0 * _E6(tau) / _E4(tau)
+      omega1     = csqrt(7.0 * G6_over_G4 * g2 / (12.0 * g3))
+    end
+    #omega1 = 1im * pi * sqrt(csqrt(1.0 / g2 / 12 * _E4(tau)))
   end
   return (omega1, tau*omega1)
 end
