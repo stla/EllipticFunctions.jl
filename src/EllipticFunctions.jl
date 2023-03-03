@@ -134,8 +134,9 @@ function _jtheta1(z::Number, tau::Complex)
       end
     else
       # q is not real
+      out = _calctheta1_alt1(z, q)
 #      out = im * _calctheta1_alt1(z / tau, exp(-im * pi / tau)) / alpha(z, tau)
-      out = im * _calctheta1_alt2(z / pi / tau, im / pi / tau) / alpha(z, tau)
+#      out = im * _calctheta1_alt2(z / pi / tau, im / pi / tau) / alpha(z, tau)
     end
   else
     # Small imag(tau) case: compute in terms of t/pi where t = -im * tau
@@ -151,8 +152,9 @@ function _jtheta1(z::Number, tau::Complex)
       end
     else
       # t is not real. No point in special casing real z here
+      out = _calctheta1_alt2(z/pi, topi)
 #      out = im * _calctheta1_alt2(z / pi / tau, im / pi / tau) / alpha(z, tau)
-      out = im * _calctheta1_alt1(z / tau, exp(-im * pi / tau)) / alpha(z, tau)
+#      out = im * _calctheta1_alt1(z / tau, exp(-im * pi / tau)) / alpha(z, tau)
     end
   end
   return out
@@ -247,11 +249,12 @@ function _EisensteinE2(tau::Complex)
 end
 
 function _jtheta1dash0(tau::Complex)
-  return exp(_ljtheta2(0.0, tau) + _ljtheta3(0.0, tau) + _ljtheta4(0.0, tau))
+  return jtheta1dash(0, tau)
+  #return exp(_ljtheta2(0.0, tau) + _ljtheta3(0.0, tau) + _ljtheta4(0.0, tau))
 end
 
 function _jtheta1dashdashdash0(tau::Complex)
-  return -2.0 * _etaDedekind(tau)^3 * _EisensteinE2(tau)
+  return -jtheta1dash(0, tau) * _EisensteinE2(tau)
 end
 
 function _dljtheta1(z::Number, tau::Complex)
