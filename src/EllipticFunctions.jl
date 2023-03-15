@@ -550,7 +550,7 @@ function CarlsonRF(x::Number, y::Number, z::Number)
   T = real(typeof(xx))
   @assert xzero + yzero + zzero <= 1 ArgumentError("At most one of `x`, `y`, `z` can be 0.")
   dx = dy = dz = typemax(T)
-  epsilon = 10.0 * eps(T)^2
+  epsilon = eps(T)^(4/3)
   while dx > epsilon || dy > epsilon || dz > epsilon
     lambda = csqrt(xx)*csqrt(yy) + csqrt(yy)*csqrt(zz) + csqrt(zz)*csqrt(xx)
     xx = (xx + lambda) / 4.0
@@ -597,7 +597,7 @@ function CarlsonRD(x::Number, y::Number, z::Number)
   dx = typemax(T)
   dy = typemax(T)
   dz = typemax(T)
-  epsilon = 10.0 * eps(T)^2
+  epsilon = eps(T)^(4/3)
   s = complex(zero(T), zero(T))
   fac = complex(one(T), zero(T))
   while dx > epsilon || dy > epsilon || dz > epsilon
@@ -736,11 +736,12 @@ function ellipticF(phi::Number, m::Number)
     return sign(imag(phi)) *
         (ellipticF(pi/2, m) - ellipticF(pi/2, 1/m) / csqrt(m))
   end
-  if abs(rphi) == pi/2 && m == 1
+  rphiopi = rphi / pi
+  if abs(rphiopi) == 1/2 && m == 1
     return complex(NaN, NaN)
   end
-  if rphi >= -pi/2 && rphi <= pi/2
-    if m == 1 && abs(rphi) < pi/2
+  if rphiopi >= -1/2 && rphiopi <= 1/2
+    if m == 1 && abs(rphiopi) < 1/2
       return atanh(sin(phi))
     end
     if m == 0
@@ -755,11 +756,11 @@ function ellipticF(phi::Number, m::Number)
     oneminusmsine2 = 1.0 - m * sine2
     return sine * CarlsonRF(cosine2, oneminusmsine2, complex(1.0, 0.0))
   end
-  if rphi > pi/2
-    k = ceil((rphi-pi/2) / pi)
+  if rphiopi > 1/2
+    k = ceil(rphiopi-1/2)
     phi = phi - k * pi
   else
-    k = -floor((pi/2-rphi) / pi)
+    k = -floor(1/2-rphiopi)
     phi = phi - k * pi
   end
   return 2*k*ellipticF(pi/2, m) + ellipticF(phi, m)
@@ -794,8 +795,8 @@ function ellipticE(phi::Number, m::Number)
   if real(m) == Inf && imag(m) == 0
     return complex(NaN, NaN)
   end
-  rphi = real(phi)
-  if rphi >= -pi/2 && rphi <= pi/2
+  rphiopi = real(phi) / pi
+  if rphiopi >= -1/2 && rphiopi <= 1/2
     if m == 0
       return phi
     end
@@ -812,11 +813,11 @@ function ellipticE(phi::Number, m::Number)
     return sine * (CarlsonRF(cosine2, oneminusmsine2, 1.0) -
             m * sine2 * CarlsonRD(cosine2, oneminusmsine2, 1.0) / 3)
   end
-  if rphi > pi/2
-    k = ceil((rphi-pi/2) / pi)
+  if rphiopi > 1/2
+    k = ceil(rphiopi-1/2)
     phi = phi - k * pi
   else
-    k = -floor((pi/2-rphi) / pi)
+    k = -floor(1/2-rphiopi)
     phi = phi - k * pi
   end
   return 2 * k * ellipticE(pi/2, m) + ellipticE(phi, m)
@@ -892,8 +893,8 @@ function ellipticPI(phi::Number, n::Number, m::Number)
   if phi == pi/2 && n == 0
     return ellipticK(m)
   end
-  rl = real(phi)
-  if rl >= -pi/2 && rl <= pi/2
+  rphiopi = real(phi) / pi
+  if rphiopi >= -1/2 && rphiopi <= 1/2
     sine = sin(phi)
     if isinf(sine)
       error("`sin(phi)` is not finite.")
@@ -904,12 +905,12 @@ function ellipticPI(phi::Number, n::Number, m::Number)
     return sine * (CarlsonRF(cosine2, oneminusmsine2, 1) +
              n * sine2 * CarlsonRJ(cosine2, oneminusmsine2, 1, 1-n*sine2) / 3)
   end
-  if rl > pi/2
-    k = ceil(rl/pi - 0.5)
+  if rphiopi > 1/2
+    k = ceil(rphiopi - 0.5)
     phi = phi - k*pi
     return 2*k*ellipticPI(pi/2, n, m) + ellipticPI(phi, n, m)
   end
-  k = -floor(0.5 - rl/pi)
+  k = -floor(0.5 - rphiopi)
   phi = phi - k*pi
   return 2*k*ellipticPI(pi/2, n, m) + ellipticPI(phi, n, m)
 end
