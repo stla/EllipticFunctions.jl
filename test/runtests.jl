@@ -31,6 +31,13 @@ using Test
   @test imag(jtheta1(1-1im, 1.e-13*im)) == Inf
 end
 
+@testset "A value of jtheta1dash." begin
+  @test isapprox(
+    jtheta1dash(1 + 1im, 1im),
+    0.81117649363854416 - 0.89452803853474627im
+  )
+end
+
 @testset "Extended precision values of the jtheta functions." begin
   setprecision(512) do
     # Iex1 := N[EllipticTheta[3, 0, Exp[-Pi]], 160]
@@ -82,13 +89,6 @@ end
       Iex7
     )
   end
-end
-
-@testset "A value of jtheta1dash." begin
-  @test isapprox(
-    jtheta1dash(1 + 1im, 1im),
-    0.81117649363854416 - 0.89452803853474627im
-  )
 end
 
 @testset "Some values of etaDedekind." begin
