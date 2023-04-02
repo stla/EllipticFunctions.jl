@@ -41,7 +41,7 @@ export jellip
 export am
 
 function xcispi(x)
-    return exp(1im * pi * x)
+    return exp(1im * (pi * x))
 end
 
 function csqrt(x::Number)
