@@ -256,7 +256,7 @@ function _jtheta1dash0(tau::Complex)
 end
 
 function _jtheta1dashdashdash0(tau::Complex)
-  return -jtheta1dash(0, tau) * _EisensteinE2(tau)
+  return -_jtheta1dash(0, tau) * _EisensteinE2(tau)
 end
 
 function _dljtheta1(z::Number, tau::Complex)
