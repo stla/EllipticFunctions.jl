@@ -394,7 +394,7 @@ The `tau` parameter given the nome `q`.
 function taufromq(q::Number)
   @assert abs(q) < 1 ArgumentError("Invalid `q`.")
   @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
-  return -im / pi * log(q)
+  return -im * (log(q) / pi)
 end
 
 """
