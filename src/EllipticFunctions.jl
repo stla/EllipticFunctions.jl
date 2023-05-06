@@ -41,7 +41,7 @@ export jellip
 export am
 
 function xcispi(x)
-    return exp(1im * pi * x)
+    return exp(1im * (pi * x))
 end
 
 function csqrt(x::Number)
@@ -160,20 +160,20 @@ function _jtheta1(z::Number, tau::Complex)
   return out
 end
 
-function _jtheta2(z::Number, tau::Complex) 
-  return _jtheta1(z + pi/2, tau)
+function _jtheta2(z::Number, tau::Complex)
+  return _jtheta1(z + pi/2one(z), tau)
 end
 
 function expM(z::Number, tau::Complex) 
   return exp(im * (z + tau * pi/4))
 end
 
-function _jtheta3(z::Number, tau::Complex) 
-  return _jtheta2(z - pi/2 * tau, tau) * expM(-z, tau)
+function _jtheta3(z::Number, tau::Complex)
+  return _jtheta2(z - pi/2one(z) * tau, tau) * expM(-z, tau)
 end
 
 function _jtheta4(z::Number, tau::Complex) 
-  return _jtheta3(z + pi/2, tau);
+  return _jtheta3(z + pi/2one(z), tau);
 end
 
 function _ljtheta1(z::Number, tau::Complex)
@@ -210,8 +210,8 @@ end
 
 function _jtheta1dash(z::Number, tau::Complex)
   q = xcispi(tau)
-  out = complex(0.0, 0.0)
-  alt = -1.0
+  out = complex(zero(q))
+  alt = -one(q)
   q² = q * q
   q²ⁿ = one(q)
   qⁿ⁽ⁿ⁺¹⁾ = one(q)
@@ -221,7 +221,7 @@ function _jtheta1dash(z::Number, tau::Complex)
       qⁿ⁽ⁿ⁺¹⁾ *= q²ⁿ
     end
     alt = -alt
-    k = 2.0 * n + 1.0
+    k = 2 * n + one(q)
     outnew = out + alt * qⁿ⁽ⁿ⁺¹⁾ * k * cos(k * z)
     if areclose(out, outnew)
       return 2 * sqrt(csqrt(q)) * out
@@ -328,29 +328,29 @@ function _wpDerivative(z, omega1::Number, tau::Complex)
 end
 
 function _thetaS(z, tau::Complex)
-  j3sq = _jtheta3_raw(0, tau)^2
+  j3sq = _jtheta3_raw(zero(tau), tau)^2
   zprime = z / j3sq / pi
   return j3sq * _jtheta1_raw.(zprime, tau) / _jtheta1dash0(tau)
 end
 
 function _thetaC(z, tau::Complex)
-  zprime = z / _jtheta3_raw(0, tau)^2 / pi
-  return _jtheta2_raw.(zprime, tau) / _jtheta2_raw(0, tau)
+  zprime = z / _jtheta3_raw(zero(tau), tau)^2 / pi
+  return _jtheta2_raw.(zprime, tau) / _jtheta2_raw(zero(tau), tau)
 end
 
 function _thetaN(z, tau::Complex)
-  zprime = z / _jtheta3_raw(0, tau)^2 / pi
-  return _jtheta4_raw.(zprime, tau) / _jtheta4_raw(0, tau)
+  zprime = z / _jtheta3_raw(zero(tau), tau)^2 / pi
+  return _jtheta4_raw.(zprime, tau) / _jtheta4_raw(zero(tau), tau)
 end
 
 function _thetaD(z, tau::Complex)
-  j3 = _jtheta3_raw(0, tau)
+  j3 = _jtheta3_raw(zero(tau), tau)
   zprime = z / j3^2 / pi
   return _jtheta3_raw.(zprime, tau) / j3
 end
 
 function _tau_from_m(m::Number)
-  1im * ellipticK(1.0 - m) / ellipticK(m)
+  1im * ellipticK(one(m) - m) / ellipticK(m)
 end
 
 function _check_and_get_tau_from_m(tau::Union{Missing,Number}, m::Union{Missing,Number})
@@ -393,6 +393,7 @@ First Jacobi theta function.
 """
 function jtheta1(z, tau::Complex)
   @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
+  z,tau = promote(z, tau)
   return _jtheta1.(z, tau)
 end
 
@@ -421,6 +422,7 @@ Second Jacobi theta function.
 """
 function jtheta2(z, tau::Complex)
   @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
+  z,tau = promote(z, tau)
   return _jtheta2.(z, tau)
 end
 
@@ -449,6 +451,7 @@ Third Jacobi theta function.
 """
 function jtheta3(z, tau::Complex)
   @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
+  z,tau = promote(z, tau)
   return _jtheta3.(z, tau)
 end
 
@@ -477,6 +480,7 @@ Fourth Jacobi theta function.
 """
 function jtheta4(z, tau::Complex)
   @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
+  z,tau = promote(z, tau)
   return _jtheta4.(z, tau)
 end
 
@@ -491,6 +495,7 @@ Derivative of the first Jacobi theta function.
 """
 function jtheta1dash(z, tau::Complex)
   @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
+  z,tau = promote(z, tau)
   return _jtheta1dash.(z, tau)
 end
 
@@ -775,7 +780,7 @@ Complete elliptic integral of the first kind.
 - `m`: complex number, the squared modulus
 """
 function ellipticK(m::Number)
-  return ellipticF(pi/2, m)
+  return ellipticF(pi/2one(m), m)
 end
 
 """
