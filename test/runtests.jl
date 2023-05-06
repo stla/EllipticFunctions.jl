@@ -5,36 +5,36 @@ using Test
 @testset "EllipticFunctions" begin
   @testset "Some values of the jtheta functions." begin
     @test isapprox(
-      jtheta3(0, 1im), 
+      jtheta3(0, qfromtau(1im)), 
       pi^(1 / 4) / gamma(3 / 4)
     )
     @test isapprox(
-      jtheta1(1 + 1im, 1im),
+      jtheta1(1 + 1im, qfromtau(1im)),
       1.1816128551455719 + 0.59589712760417439im
     )
     @test isapprox(
-      jtheta1(20, 0.01im),
+      jtheta1(20, qfromtau(0.01im)),
       0.03608696080206
     )
     @test isapprox(
-      jtheta2(1 + 1im, 1im),
+      jtheta2(1 + 1im, qfromtau(1im)),
       0.74328632006610539 - 0.904159309718008im
     )
     @test isapprox(
-      jtheta3(1 + 1im, 1im),
+      jtheta3(1 + 1im, qfromtau(1im)),
       0.86456184935441778 - 0.28488586703507289im
     )
     @test isapprox(
-      jtheta4(1 + 1im, 1im),
+      jtheta4(1 + 1im, qfromtau(1im)),
       1.1351891564632007 + 0.28517396444192509im
     )
-    @test real(jtheta1(1-1im, 1.e-13*im)) == -Inf
-    @test imag(jtheta1(1-1im, 1.e-13*im)) == Inf
+    @test real(jtheta1(1-1im, qfromtau(1.e-13*im))) == Inf
+    @test imag(jtheta1(1-1im, qfromtau(1.e-13*im))) == -Inf
   end
 
   @testset "A value of jtheta1dash." begin
     @test isapprox(
-      jtheta1dash(1 + 1im, 1im),
+      jtheta1dash(1 + 1im, qfromtau(1im)),
       0.81117649363854416 - 0.89452803853474627im
     )
   end
@@ -44,33 +44,33 @@ using Test
       # Iex1 := N[EllipticTheta[3, 0, Exp[-Pi]], 160]
       # Iex1 = big"1.08643481121330801457531612151022345707020570724521888592079031598185673226710979596056162"
       @test isapprox(
-        jtheta3(0, big"1"*im), 
+        jtheta3(0, exp(-big(pi))), 
         pi^big"0.25" / gamma(big"0.75")
       )
       # Iex2 := N[EllipticTheta[1, 1 + I, Exp[-Pi], 160]
       Iex2 = (big"1.1816128551455718838220608128070906058460179459394417512927874046725942906428169906821482386001738910544957270663484565388200625773550622468047135600093911049900" +
         im*big"0.5958971276041743872161377011027469373635813856461054043464648167761758176537939322958996491529708881657121161701834193638614120732942080672217404420939827816559")
       @test isapprox(
-        jtheta1(big"1" + 1im, big"1"*im),
+        jtheta1(big"1" + 1im, big"1"*qfromtau(im)),
         Iex2)
-      @test isapprox(jtheta1(big"1" + 1im, 1*im), Iex2)
+      @test isapprox(jtheta1(big"1" + 1im, qfromtau(im)), Iex2)
       # Iex3 := N[EllipticTheta[1, 20, Exp[-\[Pi]/100]], 160]
       Iex3 = big"0.03608696080206363155776329635672833563464711788924314080325415263411276200554664115758304102825311403434396775483262414261489360017386937024719306449683254749470"
       @test isapprox(
-        jtheta1(big"20", big"0.01"*im),
+        jtheta1(big"20", big"1"*qfromtau(im/100)),
         Iex3)
       # Iex4 := N[EllipticTheta[2, 1 + I, Exp[-Pi], 160]
       Iex4 = (big"0.7432863200661053824025802129786523834785362956592941951708805896822498191766850458788316332244978133281232831745818130600298973491832300423124975866346834329728" - 
         big"0.9041593097180079953651616403713868427230254526838112087993250064654302398913062980779292767687943979354760829763434496061036620743459953390408874339243536932842"*im)
       @test isapprox(
-        jtheta2(big"1" + 1im, big"1"*im),
+        jtheta2(big"1" + 1im, big"1"*qfromtau(im)),
         Iex4
       )
       # Iex5 := N[EllipticTheta[2, 1 + I, Exp[-Pi], 160]
       Iex5 = (big"0.8645618493544177805764400544500909422291535653000802605561669625295060578755985433578603618629183088323167111047150532663976491712264793925012387201665511406153" - 
         big"0.2848858670350728840140460807664851641159258489770164440718133953175273100784252022735901991395989448281649584146151824044349049550115567261773810228902173558426"*im)
       @test isapprox(
-        jtheta3(big(1) + 1im, big"1"*im),
+        jtheta3(big(1) + 1im, big"1"*qfromtau(im)),
         Iex5
       )
       # Iex6 := N[EllipticTheta[4, 1 + I, Exp[-Pi], 160]
@@ -80,13 +80,13 @@ using Test
         jtheta4(1 + 1im, 1im),
         Iex6
       )
-      @test real(jtheta1(big"1.0"-1im, eps(BigFloat)*im)) == -Inf
-      @test imag(jtheta1(big"1"-1im, eps(BigFloat)*im)) == -Inf
+      @test real(jtheta1(big"1.0"-1im, eps(BigFloat)*qfromtau(im))) == -Inf
+      @test imag(jtheta1(big"1"-1im, eps(BigFloat)*qfromtau(im))) == -Inf
       # Iex7 := N[EllipticThetaPrime[1, 1 + I, Exp[-Pi], 160]
       Iex7 = (big"0.8111764936385441957043074553366743391550522952772345100241804572577240584192926455803209936197529882979748406437548364116083492370624319996140934135203250303583" - 
         big"0.8945280385347462976675780747869855478742558275542709042707597767745675877012412975903384335407775407073407316973824753860860947118456849227212887278345194695573"*im)
       @test isapprox(
-        jtheta1dash(big"1.0" + 1im, big"1"*im),
+        jtheta1dash(big"1.0" + 1im, big"1"*qfromtau(im)),
         Iex7
       )
     end

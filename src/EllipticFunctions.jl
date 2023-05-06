@@ -2,6 +2,8 @@ module EllipticFunctions
 
 import SpecialFunctions
 
+export qfromtau
+export taufromq
 export ljtheta1
 export jtheta1
 export ljtheta2
@@ -249,7 +251,7 @@ function _EisensteinE2(tau::Complex)
 end
 
 function _jtheta1dash0(tau::Complex)
-  return jtheta1dash(0, tau)
+  return jtheta1dash(0, qfromtau(tau))
   #return exp(_ljtheta2(0.0, tau) + _ljtheta3(0.0, tau) + _ljtheta4(0.0, tau))
 end
 
@@ -369,133 +371,169 @@ end
 # exports ####
 
 """
-    ljtheta1(z, tau)
+    qfromtau(tau)
+
+The nome `q` given the `tau` parameter.
+
+# Arguments
+- `tau`: complex number with nonnegative imaginary part
+""" 
+function qfromtau(tau::Number)
+  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
+  return xcispi(tau)
+end
+
+"""
+    taufromq(q)
+
+The `tau` parameter given the nome `q`.
+
+# Arguments
+- `q`: complex number, the nome; it must not be a negative real number and its modulus must be strictly smaller than 1
+""" 
+function taufromq(q::Number)
+  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
+  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
+  return -im / pi * log(q)
+end
+
+"""
+    ljtheta1(z, q)
 
 Logarithm of the first Jacobi theta function.
 
 # Arguments
 - `z`: complex number or vector/array of complex numbers
-- `tau`: complex number with nonnegative imaginary part
+- `q`: the nome
 """
-function ljtheta1(z, tau::Complex)
-  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
-  return _ljtheta1.(z, tau)
+function ljtheta1(z, q::Complex)
+  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
+  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
+  return _ljtheta1.(z, taufromq(q))
 end
 
 """
-    jtheta1(z, tau)
+    jtheta1(z, q)
 
 First Jacobi theta function.
 
 # Arguments
 - `z`: complex number or vector/array of complex numbers
-- `tau`: complex number with nonnegative imaginary part
+- `q`: the nome
 """
-function jtheta1(z, tau::Complex)
-  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
-  z,tau = promote(z, tau)
+function jtheta1(z, q)
+  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
+  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
+  z,tau = promote(z, taufromq(q))
   return _jtheta1.(z, tau)
 end
 
 """
-    ljtheta2(z, tau)
+    ljtheta2(z, q)
 
 Logarithm of the second Jacobi theta function.
 
 # Arguments
 - `z`: complex number or vector/array of complex numbers
-- `tau`: complex number with nonnegative imaginary part
+- `q`: the nome
 """
-function ljtheta2(z, tau::Complex)
-  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
-  return _ljtheta2.(z, tau)
+function ljtheta2(z, q::Complex)
+  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
+  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
+  return _ljtheta2.(z, taufromq(q))
 end
 
 """
-    jtheta2(z, tau)
+    jtheta2(z, q)
 
 Second Jacobi theta function.
 
 # Arguments
 - `z`: complex number or vector/array of complex numbers
-- `tau`: complex number with nonnegative imaginary part
+- `q`: the nome
 """
-function jtheta2(z, tau::Complex)
-  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
-  z,tau = promote(z, tau)
+function jtheta2(z, q)
+  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
+  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
+  z,tau = promote(z, taufromq(q))
   return _jtheta2.(z, tau)
 end
 
 """
-    ljtheta3(z, tau)
+    ljtheta3(z, q)
 
 Logarithm of the third Jacobi theta function.
 
 # Arguments
 - `z`: complex number or vector/array of complex numbers
-- `tau`: complex number with nonnegative imaginary part
+- `q`: the nome
 """
-function ljtheta3(z, tau::Complex)
-  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
-  return _ljtheta3.(z, tau)
+function ljtheta3(z, q)
+  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
+  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
+  return _ljtheta3.(z, taufromq(q))
 end
 
 """
-    jtheta3(z, tau)
+    jtheta3(z, q)
 
 Third Jacobi theta function.
 
 # Arguments
 - `z`: complex number or vector/array of complex numbers
-- `tau`: complex number with nonnegative imaginary part
+- `q`: the nome
 """
-function jtheta3(z, tau::Complex)
-  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
-  z,tau = promote(z, tau)
+function jtheta3(z, q)
+  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
+  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
+  z,tau = promote(z, taufromq(q))
   return _jtheta3.(z, tau)
 end
 
 """
-    ljtheta4(z, tau)
+    ljtheta4(z, q)
 
 Logarithm of the fourth Jacobi theta function.
 
 # Arguments
 - `z`: complex number or vector/array of complex numbers
-- `tau`: complex number with nonnegative imaginary part
+- `q`: the nome
 """
-function ljtheta4(z, tau::Complex)
-  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
-  return _ljtheta4.(z, tau)
+function ljtheta4(z, q::Complex)
+  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
+  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
+  return _ljtheta4.(z, taufromq(q))
 end
 
 """
-    jtheta4(z, tau)
+    jtheta4(z, q)
 
 Fourth Jacobi theta function.
 
 # Arguments
 - `z`: complex number or vector/array of complex numbers
-- `tau`: complex number with nonnegative imaginary part
+- `q`: the nome
 """
-function jtheta4(z, tau::Complex)
-  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
-  z,tau = promote(z, tau)
+function jtheta4(z, q::Number)
+  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
+  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
+  z,tau = promote(z, taufromq(q))
   return _jtheta4.(z, tau)
 end
 
 """
-    jtheta1dash(z, tau)
+    jtheta1dash(z, q)
 
 Derivative of the first Jacobi theta function.
 
 # Arguments
 - `z`: complex number or vector/array of complex numbers
-- `tau`: complex number with nonnegative imaginary part
+- `q`: the nome
 """
-function jtheta1dash(z, tau::Complex)
-  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
-  z,tau = promote(z, tau)
+function jtheta1dash(z, q::Complex)
+  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
+  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
+  z,tau = promote(z, taufromq(q))
   return _jtheta1dash.(z, tau)
 end
 
