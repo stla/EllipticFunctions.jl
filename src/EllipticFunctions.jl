@@ -256,7 +256,7 @@ function _jtheta1dash0(tau::Complex)
 end
 
 function _jtheta1dashdashdash0(tau::Complex)
-  return -jtheta1dash(0, tau) * _EisensteinE2(tau)
+  return -_jtheta1dash(0, tau) * _EisensteinE2(tau)
 end
 
 function _dljtheta1(z::Number, tau::Complex)
@@ -394,7 +394,7 @@ The `tau` parameter given the nome `q`.
 function taufromq(q::Number)
   @assert abs(q) < 1 ArgumentError("Invalid `q`.")
   @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
-  return -im / pi * log(q)
+  return -im * (log(q) / pi)
 end
 
 """
