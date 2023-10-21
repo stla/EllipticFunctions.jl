@@ -1050,9 +1050,7 @@ function EisensteinE4(q::Number)
   abs(q) < 1 || throw(ArgumentError("Invalid `q`."))
   imag(q) != 0 || real(q) > 0 || throw(ArgumentError("Invalid `q`."))
   tau = -1im * log(q) / pi / 2
-  return (
-    _jtheta2_raw(0, tau)^8 + _jtheta3_raw(0, tau)^8 + _jtheta4_raw(0, tau)^8
-  ) / 2
+  return _E4(tau)
 end
 
 """
