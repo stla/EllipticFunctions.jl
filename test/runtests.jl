@@ -92,6 +92,23 @@ using Test
     end
   end
 
+  @testset "Periodicity-like properties of jtheta_ab." begin
+    a   = 2 + 0.3im
+    b   = 1 - 0.6im
+    z   = 0.1 + 0.4im
+    tau = 0.2 + 0.3im
+    q   = qfromtau(tau)
+    jab = jtheta_ab(a, b, z, q)
+    @test isapprox(
+      jtheta_ab(a, b, z + pi, q), 
+      jab * exp(2im*a*pi)
+    )
+    @test isapprox(
+      jtheta_ab(a, b, z + tau*pi, q), 
+      jab * exp(-1im*(tau*pi + 2*z + 2*b*pi))
+    )
+  end
+
   @testset "Some values of etaDedekind." begin
     @test isapprox(etaDedekind(1im / 2), gamma(1 / 4) / 2^(7 / 8) / pi^(3 / 4))
     @test isapprox(etaDedekind(2im), gamma(1 / 4) / 2^(11 / 8) / pi^(3 / 4))
@@ -402,7 +419,8 @@ using Test
     Nex4 = big"0.8208687952453040055355508266515636852582693361520696044642407581282798088176868137965928997680175840294528934362468203055166725784495088747128187657877631004078"
     @test isapprox(
       thetaS(z; m = m),
-      Nex4
+      Nex4;
+      atol = 1e-15
     )
   end
 

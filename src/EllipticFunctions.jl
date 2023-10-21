@@ -12,6 +12,7 @@ export ljtheta3
 export jtheta3
 export ljtheta4
 export jtheta4
+export jtheta_ab
 export jtheta1dash
 export etaDedekind
 export lambda
@@ -205,6 +206,13 @@ function _ljtheta4(z::Number, tau::Complex)
   return log(_jtheta4(z, tau))
 end
 
+function _jtheta_ab(a::Number, b::Number, z::Number, tau::Complex) 
+  alpha = a * tau
+  beta  = b + z/pi
+  C = xcispi(a * (alpha + 2*beta)) 
+  return C * _jtheta3_raw(alpha + beta, tau)
+end
+
 function _jtheta1dash(z::Number, tau::Complex)
   q = xcispi(tau)
   out = complex(zero(q))
@@ -245,7 +253,7 @@ function _EisensteinE2(tau::Complex)
 end
 
 function _jtheta1dash0(tau::Complex)
-  return jtheta1dash(0, qfromtau(tau))
+  return -2im * _jtheta_ab(1/6, 1/2, zero(tau), 3*tau)^3
   #return exp(_ljtheta2(0.0, tau) + _ljtheta3(0.0, tau) + _ljtheta4(0.0, tau))
 end
 
@@ -515,6 +523,28 @@ function jtheta4(z, q::Number)
   @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
   z,tau = promote(z, taufromq(q))
   return _jtheta4.(z, tau)
+end
+
+"""
+    jtheta_ab(a, b, z, q)
+
+Jacobi theta function with characteristics. This is a family of functions
+parameterized by `a` and `b`, which contains the opposite of the first Jacobi 
+theta function (`a=b=0.5`), the second Jacobi theta function (`a=0.5,b=0`), 
+the third Jacobi theta function (`a=b=0`), and the fourth Jacobi theta 
+function (`a=0,b=0.5`).
+
+# Arguments
+- `a`: first characteristic, a real or complex number
+- `b`: second characteristic, a real or complex number
+- `z`: real or complex number or array of numbers
+- `q`: the nome
+"""
+function jtheta_ab(a::Number, b::Number, z, q::Number)
+  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
+  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
+  a,b,z,tau = promote(a, b, z, taufromq(q))
+  return _jtheta_ab.(a, b, z, tau)
 end
 
 """
