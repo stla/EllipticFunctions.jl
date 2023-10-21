@@ -253,7 +253,7 @@ function _EisensteinE2(tau::Complex)
 end
 
 function _jtheta1dash0(tau::Complex)
-  return -2im * _jtheta_ab(1/6, 1/2, zero(tau), 3*tau)^3
+  return -2im * _jtheta_ab(1/(6*one(tau)), 1/2, 0, 3*tau)^3
   #return exp(_ljtheta2(0.0, tau) + _ljtheta3(0.0, tau) + _ljtheta4(0.0, tau))
 end
 
