@@ -31,6 +31,7 @@ export ellipticPI
 export agm
 export EisensteinE2
 export EisensteinE4
+export EisensteinE6
 export halfPeriods
 export ellipticInvariants
 export wp
