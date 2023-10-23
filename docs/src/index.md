@@ -54,6 +54,7 @@ ljtheta3
 jtheta3
 ljtheta4
 jtheta4
+jtheta_ab
 jtheta1dash
 etaDedekind
 lambda
