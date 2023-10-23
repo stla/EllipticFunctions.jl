@@ -92,6 +92,24 @@ using Test
     end
   end
 
+  @testset "log-jtheta functions." begin
+    z   = 0.1 + 0.4im
+    tau = 6.2 + 6.3im
+    q   = qfromtau(tau)
+    @test isapprox(
+      ljtheta1(z, q), log(jtheta1(z, q))
+    )
+    @test isapprox(
+      ljtheta2(z, q), log(jtheta2(z, q))
+    )
+    @test isapprox(
+      ljtheta3(z, q), log(jtheta3(z, q))
+    )
+    @test isapprox(
+      ljtheta4(z, q), log(jtheta4(z, q))
+    )
+  end
+
   @testset "Periodicity-like properties of jtheta_ab." begin
     a   = 2 + 0.3im
     b   = 1 - 0.6im

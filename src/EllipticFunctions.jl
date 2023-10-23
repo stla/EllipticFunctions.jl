@@ -190,20 +190,29 @@ function _jtheta4(z::Number, tau::Complex)
   return _jtheta4_raw(z/pi, tau);
 end
 
+function principal_log_branch(z)
+  y = imag(z)
+  (y ≤ π) && (-y < π) && return z
+  twopi = 2 * one(y) * π
+  y = mod(y, twopi)
+  y > π && (y -= twopi)
+  return complex(real(z), y)
+end
+
 function _ljtheta1(z::Number, tau::Complex)
-  return log(_jtheta1(z, tau))
+  return principal_log_branch(_ljtheta1_raw(z/pi, tau))
 end
 
 function _ljtheta2(z::Number, tau::Complex)
-  return log(_jtheta2(z, tau))
+  return principal_log_branch(_ljtheta2_raw(z/pi, tau))
 end
 
 function _ljtheta3(z::Number, tau::Complex)
-  return log(_jtheta3(z, tau))
+  return principal_log_branch(_ljtheta3_raw(z/pi, tau))
 end
 
 function _ljtheta4(z::Number, tau::Complex)
-  return log(_jtheta4(z, tau))
+  return principal_log_branch(_ljtheta4_raw(z/pi, tau))
 end
 
 function _jtheta_ab(a::Number, b::Number, z::Number, tau::Complex) 
