@@ -601,7 +601,7 @@ function kleinj(tau::Complex)
   @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
   lbd = (_jtheta2_raw(0, tau) / _jtheta3_raw(0, tau))^4
   x = lbd * (1.0 - lbd)
-  return 256 * (1-x)^3 / x^2
+  return 256 * (1/x - 1)^2 * (1 - x)  #256 * (1-x)^3 / x^2
 end
 
 """
