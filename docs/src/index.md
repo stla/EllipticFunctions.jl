@@ -56,6 +56,8 @@ ljtheta4
 jtheta4
 jtheta_ab
 jtheta1dash
+qfromtau
+taufromq
 etaDedekind
 lambda
 kleinj
@@ -73,6 +75,7 @@ ellipticZ
 agm
 EisensteinE2
 EisensteinE4
+EisensteinE6
 ellipticInvariants
 halfPeriods
 wp
