@@ -9,21 +9,12 @@ jobs:
   docs:
     name: Documentation
     runs-on: ubuntu-latest
-    if: "contains( github.event.pull_request.labels.*.name, 'preview docs') || github.ref == 'refs/heads/master' || contains(github.ref, 'refs/tags/')"
     steps:
-      - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@latest
+      - uses: actions/checkout@v3
+      - uses: julia-actions/setup-julia@v1
         with:
-          version: 1.6
-      - uses: julia-actions/julia-docdeploy@v1
+          version: "1"
+      - uses: julia-actions/julia-docdeploy@releases/v1
         env:
-          PYTHON: ""
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
-  note:
-    name: "Documentation deployment note."
-    runs-on: ubuntu-latest
-    if: "!contains( github.event.pull_request.labels.*.name, 'preview docs')"
-    steps:
-      - name: echo instructions
-        run: echo 'The Documentation is only generated and pushed on a PR if the “preview docs” label is added.'
