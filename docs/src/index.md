@@ -25,7 +25,7 @@ function colormap(z)
         (1.0 - cos(b-0.5))*8.0
     )
 end
-# function to be plottes
+# function to be plotted
 function f(z)
     return EllipticFunctions.wzeta(z; tau = 0.1 + 3im)
 end
