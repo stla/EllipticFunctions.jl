@@ -490,4 +490,8 @@ using Test
       atol = 1e-15
     )
   end
+
+  @testset "Negative real Q" begin
+    jtheta1(1.0, -0.5 + 1e-30im) == jtheta1(1.0, -0.5)
+  end
 end

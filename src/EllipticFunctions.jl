@@ -44,6 +44,16 @@ export thetaS
 export jellip
 export am
 
+@inline function validateq(q::Number, err = ArgumentError("|q| must be less than 1"))
+    abs(q) < 1 || throw(err)
+    return
+end
+
+@inline function validatetau(tau::Number, err = ArgumentError("imag(tau) must be positive"))
+    imag(tau) > 0 || throw(err)
+    return
+end
+
 function xcispi(x)
     return exp(1im * (pi * x))
 end
@@ -371,12 +381,12 @@ end
 
 function _check_and_get_tau_from_m(tau::Union{Missing,Number}, m::Union{Missing,Number})
   nmissing = ismissing(tau) + ismissing(m)
-  @assert nmissing == 1 ArgumentError("You must supply either `tau` or `m`.")
+  nmissing == 1 || throw(ArgumentError("You must supply either `tau` or `m`."))
   if !ismissing(tau)
-    @assert imag(tau) > 0 ArgumentError("The imaginary part of `tau` must be nonnegative.")
+    validatetau(tau)
   else
     tau = _tau_from_m(m)
-    @assert imag(tau) > 0 ArgumentError("Invalid value of `m`.")
+    validatetau(tau, ArgumentError("Invalid value of `m`."))
   end
   return tau
 end
@@ -393,7 +403,7 @@ The nome `q` given the `tau` parameter.
 - `tau`: complex number with nonnegative imaginary part
 """ 
 function qfromtau(tau::Complex)
-  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
+  validatetau(tau)
   return xcispi(tau)
 end
 
@@ -403,14 +413,22 @@ end
 The `tau` parameter given the nome `q`.
 
 # Arguments
-- `q`: complex number, the nome; it must not be a negative real number and its modulus must be strictly smaller than 1
+- `q`: A real or complex number with modulus strictly smaller than 1
 """ 
-function taufromq(q::Number)
-  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
-  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
-  return -im * (log(q) / pi)
+function taufromq(q::Complex)
+    validateq(q)
+    return -im * (log(q) / pi)
 end
 
+function taufromq(q::Real)
+    validateq(q)
+    if q < 0
+        return complex(one(q), -log(abs(q)) / pi)
+    else
+        return -im * (log(q) / pi)
+    end
+end
+  
 """
     ljtheta1(z, q)
 
@@ -421,8 +439,7 @@ Logarithm of the first Jacobi theta function.
 - `q`: the nome
 """
 function ljtheta1(z, q::Number)
-  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
-  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
+  validateq(q)
   return _ljtheta1.(z, taufromq(q))
 end
 
@@ -436,8 +453,7 @@ First Jacobi theta function.
 - `q`: the nome
 """
 function jtheta1(z, q::Number)
-  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
-  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
+  validateq(q)
   z,tau = promote(z, taufromq(q))
   return _jtheta1.(z, tau)
 end
@@ -452,8 +468,7 @@ Logarithm of the second Jacobi theta function.
 - `q`: the nome
 """
 function ljtheta2(z, q::Number)
-  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
-  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
+  validateq(q)
   return _ljtheta2.(z, taufromq(q))
 end
 
@@ -467,8 +482,7 @@ Second Jacobi theta function.
 - `q`: the nome
 """
 function jtheta2(z, q::Number)
-  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
-  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
+  validateq(q)
   z,tau = promote(z, taufromq(q))
   return _jtheta2.(z, tau)
 end
@@ -483,8 +497,7 @@ Logarithm of the third Jacobi theta function.
 - `q`: the nome
 """
 function ljtheta3(z, q::Number)
-  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
-  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
+  validateq(q)
   return _ljtheta3.(z, taufromq(q))
 end
 
@@ -498,8 +511,7 @@ Third Jacobi theta function.
 - `q`: the nome
 """
 function jtheta3(z, q::Number)
-  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
-  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
+  validateq(q)
   z,tau = promote(z, taufromq(q))
   return _jtheta3.(z, tau)
 end
@@ -514,8 +526,7 @@ Logarithm of the fourth Jacobi theta function.
 - `q`: the nome
 """
 function ljtheta4(z, q::Number)
-  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
-  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
+  validateq(q)
   return _ljtheta4.(z, taufromq(q))
 end
 
@@ -529,8 +540,7 @@ Fourth Jacobi theta function.
 - `q`: the nome
 """
 function jtheta4(z, q::Number)
-  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
-  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
+  validateq(q)
   z,tau = promote(z, taufromq(q))
   return _jtheta4.(z, tau)
 end
@@ -551,8 +561,7 @@ function (`a=0,b=0.5`).
 - `q`: the nome
 """
 function jtheta_ab(a::Number, b::Number, z, q::Number)
-  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
-  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
+  validateq(q)
   a,b,z,tau = promote(a, b, z, taufromq(q))
   return _jtheta_ab.(a, b, z, tau)
 end
@@ -567,8 +576,7 @@ Derivative of the first Jacobi theta function.
 - `q`: the nome
 """
 function jtheta1dash(z, q::Number)
-  @assert abs(q) < 1 ArgumentError("Invalid `q`.")
-  @assert imag(q) != 0 || real(q) > 0 ArgumentError("Invalid `q`.")
+  validateq(q)
   z,tau = promote(z, taufromq(q))
   return _jtheta1dash.(z, tau)
 end
@@ -582,7 +590,7 @@ Dedekind eta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function etaDedekind(tau::Complex)
-  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
+  validatetau(tau)
   return _etaDedekind(tau)
 end
 
@@ -595,7 +603,7 @@ Lambda modular function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function lambda(tau::Complex)
-  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
+  validatetau(tau)
   return (_jtheta2_raw(0, tau) / _jtheta3_raw(0, tau))^4
 end
 
@@ -608,7 +616,7 @@ Klein j-invariant function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function kleinj(tau::Complex)
-  @assert imag(tau) > 0 ArgumentError("Invalid `tau`.")
+  validatetau(tau)
   lbd = (_jtheta2_raw(0, tau) / _jtheta3_raw(0, tau))^4
   x = lbd * (1.0 - lbd)
   return 256 * (1/x - 1)^2 * (1 - x)  #256 * (1-x)^3 / x^2
@@ -655,7 +663,7 @@ Carlson 'RC' integral.
 - `x`,`y`: real or complex numbers; `y` cannot be zero
 """
 function CarlsonRC(x::Number, y::Number)
-  @assert y != 0 ArgumentError("`y` cannot be 0.")
+  iszero(y) && throw(ArgumentError("`y` cannot be 0."))
   return CarlsonRF(x, y, y)
 end
 
