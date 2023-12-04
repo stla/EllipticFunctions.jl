@@ -23,14 +23,12 @@ export thetaC, thetaD, thetaN, thetaS
 export jellip
 export am
 
-@inline function validateq(q::Number, err = ArgumentError("|q| must be less than 1"))
-    abs(q) < 1 || throw(err)
-    return
+macro validateq(q, errmsg="|q| must be less than 1")
+  :(abs($(esc(q))) < 1 || throw(ArgumentError($errmsg)))
 end
 
-@inline function validatetau(tau::Number, err = ArgumentError("imag(tau) must be positive"))
-    imag(tau) > 0 || throw(err)
-    return
+macro validatetau(tau, errmsg="imag(tau) must be positive")
+  :(imag($(esc(tau))) >0 || throw(ArgumentError($errmsg)))
 end
 
 xcispi(x) = exp(1im * (pi * x))
@@ -302,10 +300,10 @@ function _check_and_get_tau_from_m(tau::Union{Missing,Number}, m::Union{Missing,
   nmissing = ismissing(tau) + ismissing(m)
   nmissing == 1 || throw(ArgumentError("You must supply either `tau` or `m`."))
   if !ismissing(tau)
-    validatetau(tau)
+    @validatetau(tau)
   else
     tau = _tau_from_m(m)
-    validatetau(tau, ArgumentError("Invalid value of `m`."))
+    @validatetau(tau, "Invalid value of `m`.")
   end
   return tau
 end
@@ -322,7 +320,7 @@ The nome `q` given the `tau` parameter.
 - `tau`: complex number with nonnegative imaginary part
 """ 
 function qfromtau(tau::Complex)
-  validatetau(tau)
+  @validatetau(tau)
   return xcispi(tau)
 end
 
@@ -335,15 +333,15 @@ The `tau` parameter given the nome `q`.
 - `q`: A real or complex number with modulus strictly smaller than 1
 """ 
 function taufromq(q::Complex)
-    validateq(q)
-    return -im * (log(q) / pi)
+  @validateq(q)
+  return -im * (log(q) / pi)
 end
 
 function taufromq(q::Real)
-    validateq(q)
-    if q < 0
-        return complex(one(q), -log(abs(q)) / pi)
-    else
+  @validateq(q)
+  if q < 0
+    return complex(one(q), -log(abs(q)) / pi)
+  else
         return -im * (log(q) / pi)
     end
 end
@@ -358,7 +356,7 @@ Logarithm of the first Jacobi theta function.
 - `q`: the nome
 """
 function ljtheta1(z, q::Number)
-  validateq(q)
+  @validateq(q)
   return _ljtheta1.(z, taufromq(q))
 end
 
@@ -372,7 +370,7 @@ First Jacobi theta function.
 - `q`: the nome
 """
 function jtheta1(z, q::Number)
-  validateq(q)
+  @validateq(q)
   z,tau = promote(z, taufromq(q))
   return _jtheta1.(z, tau)
 end
@@ -387,7 +385,7 @@ Logarithm of the second Jacobi theta function.
 - `q`: the nome
 """
 function ljtheta2(z, q::Number)
-  validateq(q)
+  @validateq(q)
   return _ljtheta2.(z, taufromq(q))
 end
 
@@ -401,7 +399,7 @@ Second Jacobi theta function.
 - `q`: the nome
 """
 function jtheta2(z, q::Number)
-  validateq(q)
+  @validateq(q)
   z,tau = promote(z, taufromq(q))
   return _jtheta2.(z, tau)
 end
@@ -416,7 +414,7 @@ Logarithm of the third Jacobi theta function.
 - `q`: the nome
 """
 function ljtheta3(z, q::Number)
-  validateq(q)
+  @validateq(q)
   return _ljtheta3.(z, taufromq(q))
 end
 
@@ -430,7 +428,7 @@ Third Jacobi theta function.
 - `q`: the nome
 """
 function jtheta3(z, q::Number)
-  validateq(q)
+  @validateq(q)
   z,tau = promote(z, taufromq(q))
   return _jtheta3.(z, tau)
 end
@@ -445,7 +443,7 @@ Logarithm of the fourth Jacobi theta function.
 - `q`: the nome
 """
 function ljtheta4(z, q::Number)
-  validateq(q)
+  @validateq(q)
   return _ljtheta4.(z, taufromq(q))
 end
 
@@ -459,7 +457,7 @@ Fourth Jacobi theta function.
 - `q`: the nome
 """
 function jtheta4(z, q::Number)
-  validateq(q)
+  @validateq(q)
   z,tau = promote(z, taufromq(q))
   return _jtheta4.(z, tau)
 end
@@ -480,7 +478,7 @@ function (`a=0,b=0.5`).
 - `q`: the nome
 """
 function jtheta_ab(a::Number, b::Number, z, q::Number)
-  validateq(q)
+  @validateq(q)
   a,b,z,tau = promote(a, b, z, taufromq(q))
   return _jtheta_ab.(a, b, z, tau)
 end
@@ -495,7 +493,7 @@ Derivative of the first Jacobi theta function.
 - `q`: the nome
 """
 function jtheta1dash(z, q::Number)
-  validateq(q)
+  @validateq(q)
   z,tau = promote(z, taufromq(q))
   return _jtheta1dash.(z, tau)
 end
@@ -509,7 +507,7 @@ Dedekind eta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function etaDedekind(tau::Complex)
-  validatetau(tau)
+  @validatetau(tau)
   return _etaDedekind(tau)
 end
 
@@ -522,7 +520,7 @@ Lambda modular function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function lambda(tau::Complex)
-  validatetau(tau)
+  @validatetau(tau)
   return (_jtheta2_raw(0, tau) / _jtheta3_raw(0, tau))^4
 end
 
@@ -535,7 +533,7 @@ Klein j-invariant function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function kleinj(tau::Complex)
-  validatetau(tau)
+  @validatetau(tau)
   lbd = (_jtheta2_raw(0, tau) / _jtheta3_raw(0, tau))^4
   x = lbd * (1.0 - lbd)
   return 256 * (1/x - 1)^2 * (1 - x)  #256 * (1-x)^3 / x^2
