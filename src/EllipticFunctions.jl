@@ -136,7 +136,7 @@ _jtheta2(z::Number, tau::Complex) = _jtheta2_raw(z/pi, tau)
 _jtheta3(z::Number, tau::Complex) = _jtheta3_raw(z/pi, tau)
 _jtheta4(z::Number, tau::Complex) = _jtheta4_raw(z/pi, tau)
 
-principal_log_branch(z) = complex(real(z), rem(imag(z),2pi,RoundNearest))
+principal_log_branch(z) = complex(real(z), rem(imag(z),2convert(typeof(imag(z)),pi),RoundNearest))
 
 _ljtheta1(z::Number, tau::Complex) = principal_log_branch(_ljtheta1_raw(z/pi, tau))
 _ljtheta2(z::Number, tau::Complex) = principal_log_branch(_ljtheta2_raw(z/pi, tau))
