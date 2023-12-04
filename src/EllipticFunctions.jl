@@ -2,45 +2,24 @@ module EllipticFunctions
 
 import SpecialFunctions
 
-export qfromtau
-export taufromq
-export ljtheta1
-export jtheta1
-export ljtheta2
-export jtheta2
-export ljtheta3
-export jtheta3
-export ljtheta4
-export jtheta4
-export jtheta_ab
-export jtheta1dash
+export qfromtau, taufromq
+export ljtheta1, ljtheta2, ljtheta3, ljtheta4
+export jtheta1, jtheta2, jtheta3, jtheta4
+export jtheta_ab, jtheta1dash
 export etaDedekind
 export lambda
 export kleinj
 export kleinjinv
-export CarlsonRF
-export CarlsonRC
-export CarlsonRD
-export CarlsonRG
-export CarlsonRJ
-export ellipticE
-export ellipticF
-export ellipticK
-export ellipticZ
-export ellipticPI
+export CarlsonRF, CarlsonRC, CarlsonRD, CarlsonRG, CarlsonRJ
+export ellipticE, ellipticF, ellipticK, ellipticZ, ellipticPI
 export agm
-export EisensteinE2
-export EisensteinE4
-export EisensteinE6
+export EisensteinE2, EisensteinE4, EisensteinE6
 export halfPeriods
 export ellipticInvariants
 export wp
 export wsigma
 export wzeta
-export thetaC
-export thetaD
-export thetaN
-export thetaS
+export thetaC, thetaD, thetaN, thetaS
 export jellip
 export am
 
@@ -54,13 +33,8 @@ end
     return
 end
 
-function xcispi(x)
-    return exp(1im * (pi * x))
-end
-
-function csqrt(x::Number)
-  return sqrt(Complex(x))
-end
+xcispi(x) = exp(1im * (pi * x))
+csqrt(x::Number) = sqrt(Complex(x))
 
 function areclose(z1::S, z2::S) where {T <: Real, S <: Union{T, Complex{T}}}
   z1 == z2 && (return true)
@@ -119,9 +93,7 @@ function argtheta3(z::Number, tau::Complex, passes::Int64)
   return out
 end
 
-function dologtheta4(z::Number, tau::Complex, passes::Int64) 
-  return dologtheta3(z + 0.5, tau, passes + 1)
-end
+dologtheta4(z::Number, tau::Complex, passes::Int64) = dologtheta3(z + 0.5, tau, passes + 1)
 
 function dologtheta3(z::Number, tau::Complex, passes::Int64)
   passes += 1
@@ -149,82 +121,29 @@ function dologtheta3(z::Number, tau::Complex, passes::Int64)
   return out
 end
 
-function M(z::Number, tau::Complex)
-  return 1im * (z + tau / 4) * pi
-end
+M(z::Number, tau::Complex) = 1im * (z + tau / 4) * pi
 
-function _ljtheta2_raw(z::Number, tau::Complex)
-  return M(z, tau) + dologtheta3(z + 0.5 * tau, tau, 0)
-end
+_ljtheta2_raw(z::Number, tau::Complex) = M(z, tau) + dologtheta3(z + 0.5 * tau, tau, 0)
+_ljtheta1_raw(z::Number, tau::Complex) = _ljtheta2_raw(z - 0.5, tau)
+_ljtheta3_raw(z::Number, tau::Complex) = dologtheta3(z, tau, 0)
+_ljtheta4_raw(z::Number, tau::Complex) = dologtheta4(z, tau, 0)
 
-function _jtheta2_raw(z::Number, tau::Complex)
-  return exp(_ljtheta2_raw(z, tau))
-end
+_jtheta2_raw(z::Number, tau::Complex) = exp(_ljtheta2_raw(z, tau))
+_jtheta1_raw(z::Number, tau::Complex) = exp(_ljtheta1_raw(z, tau))
+_jtheta3_raw(z::Number, tau::Complex) = exp(_ljtheta3_raw(z, tau))
+_jtheta4_raw(z::Number, tau::Complex) = exp(_ljtheta4_raw(z, tau))
 
-function _ljtheta1_raw(z::Number, tau::Complex)
-  return _ljtheta2_raw(z - 0.5, tau)
-end
+_jtheta1(z::Number, tau::Complex) = _jtheta1_raw(z/pi, tau)
+_jtheta2(z::Number, tau::Complex) = _jtheta2_raw(z/pi, tau)
+_jtheta3(z::Number, tau::Complex) = _jtheta3_raw(z/pi, tau)
+_jtheta4(z::Number, tau::Complex) = _jtheta4_raw(z/pi, tau)
 
-function _jtheta1_raw(z::Number, tau::Complex)
-  return exp(_ljtheta1_raw(z, tau))
-end
+principal_log_branch(z) = complex(real(z), rem(imag(z),2pi,RoundNearest))
 
-function _ljtheta3_raw(z::Number, tau::Complex)
-  return dologtheta3(z, tau, 0)
-end
-
-function _jtheta3_raw(z::Number, tau::Complex) 
-  return exp(_ljtheta3_raw(z, tau))
-end
-
-function _ljtheta4_raw(z::Number, tau::Complex)
-  return dologtheta4(z, tau, 0)
-end
-
-function _jtheta4_raw(z::Number, tau::Complex)
-  return exp(_ljtheta4_raw(z, tau))
-end
-
-function _jtheta1(z::Number, tau::Complex) 
-  return _jtheta1_raw(z/pi, tau);
-end
-
-function _jtheta2(z::Number, tau::Complex) 
-  return _jtheta2_raw(z/pi, tau);
-end
-
-function _jtheta3(z::Number, tau::Complex) 
-  return _jtheta3_raw(z/pi, tau);
-end
-
-function _jtheta4(z::Number, tau::Complex) 
-  return _jtheta4_raw(z/pi, tau);
-end
-
-function principal_log_branch(z)
-  y = imag(z)
-  (y ≤ π) && (-y < π) && return z
-  twopi = 2 * one(y) * π
-  y = mod(y, twopi)
-  y > π && (y -= twopi)
-  return complex(real(z), y)
-end
-
-function _ljtheta1(z::Number, tau::Complex)
-  return principal_log_branch(_ljtheta1_raw(z/pi, tau))
-end
-
-function _ljtheta2(z::Number, tau::Complex)
-  return principal_log_branch(_ljtheta2_raw(z/pi, tau))
-end
-
-function _ljtheta3(z::Number, tau::Complex)
-  return principal_log_branch(_ljtheta3_raw(z/pi, tau))
-end
-
-function _ljtheta4(z::Number, tau::Complex)
-  return principal_log_branch(_ljtheta4_raw(z/pi, tau))
-end
+_ljtheta1(z::Number, tau::Complex) = principal_log_branch(_ljtheta1_raw(z/pi, tau))
+_ljtheta2(z::Number, tau::Complex) = principal_log_branch(_ljtheta2_raw(z/pi, tau))
+_ljtheta3(z::Number, tau::Complex) = principal_log_branch(_ljtheta3_raw(z/pi, tau))
+_ljtheta4(z::Number, tau::Complex) = principal_log_branch(_ljtheta4_raw(z/pi, tau))
 
 function _jtheta_ab(a::Number, b::Number, z::Number, tau::Complex) 
   alpha = a * tau
