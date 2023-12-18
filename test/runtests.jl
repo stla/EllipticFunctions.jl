@@ -494,3 +494,7 @@ using Test
     jtheta1(1.0, -0.5 + 1e-30im) == jtheta1(1.0, -0.5)
   end
 end
+
+if haskey(ENV, "BENCHMARK")
+  include("benchmark.jl")
+end
