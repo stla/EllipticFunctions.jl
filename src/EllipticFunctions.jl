@@ -213,7 +213,7 @@ function _dljtheta1(z::Number, tau::Complex)
 end
 
 function _E4(tau::Complex)
-  _jtheta2_raw(0, tau)^8 + _jtheta3_raw(0, tau)^8 + _jtheta4_raw(0, tau)^8 / 2
+  (_jtheta2_raw(0, tau)^8 + _jtheta3_raw(0, tau)^8 + _jtheta4_raw(0, tau)^8) / 2
 end
 
 function _E6(tau::Complex)
