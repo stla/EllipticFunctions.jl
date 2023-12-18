@@ -339,16 +339,12 @@ The `tau` parameter given the nome `q`.
 """
 function taufromq(q::Complex)
   @validateq(q)
-  return -im * (log(q) / pi)
+  -im * (log(q) / pi)
 end
 
 function taufromq(q::Real)
   @validateq(q)
-  if q < 0
-    return complex(one(q), -log(abs(q)) / pi)
-  else
-        return -im * (log(q) / pi)
-    end
+  q<0 ? complex(one(q), -log(abs(q)) / pi) : -im * (log(q) / pi)
 end
 
 """
@@ -484,7 +480,7 @@ function (`a=0,b=0.5`).
 """
 function jtheta_ab(a::Number, b::Number, z, τ::Complex)
   @validatetau(τ)
-  a,b,z = promote(a, b, z, τ)
+  a,b,z,τ = promote(a, b, z, τ)
   return _jtheta_ab.(a, b, z, τ)
 end
 
