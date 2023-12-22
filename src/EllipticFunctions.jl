@@ -29,14 +29,14 @@ macro validateq(q, errmsg="|q| must be less than 1")
 end
 
 macro validatetau(tau, errmsg="imag(tau) must be positive")
-  :(imag($(esc(tau))) >0 || throw(ArgumentError($errmsg)))
+  :(imag($(esc(tau))) > 0 || throw(ArgumentError($errmsg)))
 end
 
 xcispi(x::T) where{T<:Number} = exp(1im * (pi * x))
 csqrt(x::_) where{_<:Real} = sqrt(Complex(x))
 csqrt(x::Complex{<:Real}) = sqrt(x)
 
-function areclose(z1::S, z2::S) where {T<:Real,S<:Union{T,Complex{T}}}
+function areclose(z1::S, z2::S) where {T<:Real, S<:Union{T,Complex{T}}}
   z1 == z2 && (return true)
   eps2 = eps(T)^2
   mod2_z2 = abs2(z2)
@@ -193,7 +193,7 @@ end
 function _EisensteinE2(tau::Complex)
   j3 = _jtheta3_raw(0, tau)
   lbd = (_jtheta2_raw(0, tau) / j3)^4
-  j3sq = j3^2
+  j3sq = j3*j3
   6 * ellipticE(lbd) * j3sq * invπ - j3sq^2 - _jtheta4_raw(0, tau)^4
 end
 
@@ -254,47 +254,47 @@ function _g2_from_omega1_and_tau(omega1::Number, tau::Complex)
   4/3 * (halfπ/omega1)^4 * (j2^8 - (j2*j3)^4 + j3^8)
 end
 
-function _wpFromTau(z, tau::Complex)
+function _wpFromTau(z::Number, tau::Complex)
   j2 = _jtheta2_raw(0, tau)
   j3 = _jtheta3_raw(0, tau)
-  j1 = _jtheta1_raw.(z, tau)
-  j4 = _jtheta4_raw.(z, tau)
-  (pi * j2 * j3 * j4 ./ j1)^2 .- (pi^2 * (j2^4 + j3^4) / 3.0)
+  j1 = _jtheta1_raw(z, tau)
+  j4 = _jtheta4_raw(z, tau)
+  (pi * j2 * j3 * j4 / j1)^2 - (pi^2 * (j2^4 + j3^4) / 3.0)
 end
 
-function _wpDerivative(z, omega1::Number, tau::Complex)
+function _wpDerivative(z::Number, omega1::Number, tau::Complex)
   w1 = 2 * omega1 * invπ
   z1 = - z / 2 / omega1
-  j1 = _jtheta1_raw.(z1, tau)
-  j2 = _jtheta2_raw.(z1, tau)
-  j3 = _jtheta3_raw.(z1, tau)
-  j4 = _jtheta4_raw.(z1, tau)
+  j1 = _jtheta1_raw(z1, tau)
+  j2 = _jtheta2_raw(z1, tau)
+  j3 = _jtheta3_raw(z1, tau)
+  j4 = _jtheta4_raw(z1, tau)
   f = _jtheta1dash0(tau)^3 /
     (_jtheta2_raw(0, tau) * _jtheta3_raw(0, tau) *
-       _jtheta4_raw(0, tau) * j1.^3)
-  2/(w1*w1*w1) * j2 .* j3 .* j4 .* f
+       _jtheta4_raw(0, tau) * j1^3)
+  2/(w1*w1*w1) * j2 * j3 * j4 * f
 end
 
-function _thetaS(z, tau::Complex)
+function _thetaS(z::Number, tau::Complex)
   j3sq = _jtheta3_raw(zero(tau), tau)^2
   zprime = z / j3sq * invπ
-  return j3sq * _jtheta1_raw.(zprime, tau) / _jtheta1dash0(tau)
+  return j3sq * _jtheta1_raw(zprime, tau) / _jtheta1dash0(tau)
 end
 
-function _thetaC(z, tau::Complex)
+function _thetaC(z::Number, tau::Complex)
   zprime = z / _jtheta3_raw(zero(tau), tau)^2 * invπ
-  return _jtheta2_raw.(zprime, tau) / _jtheta2_raw(zero(tau), tau)
+  return _jtheta2_raw(zprime, tau) / _jtheta2_raw(zero(tau), tau)
 end
 
-function _thetaN(z, tau::Complex)
-  zprime = z / _jtheta3_raw(zero(tau), tau)^2  * invπ
-  return _jtheta4_raw.(zprime, tau) / _jtheta4_raw(zero(tau), tau)
+function _thetaN(z::Number, tau::Complex)
+  zprime = z / _jtheta3_raw(zero(tau), tau)^2 * invπ
+  return _jtheta4_raw(zprime, tau) / _jtheta4_raw(zero(tau), tau)
 end
 
-function _thetaD(z, tau::Complex)
+function _thetaD(z::Number, tau::Complex)
   j3 = _jtheta3_raw(zero(tau), tau)
   zprime = z / j3^2  * invπ
-  return _jtheta3_raw.(zprime, tau) / j3
+  return _jtheta3_raw(zprime, tau) / j3
 end
 
 function _tau_from_m(m::Number)
@@ -344,7 +344,7 @@ end
 
 function taufromq(q::Real)
   @validateq(q)
-  q<0 ? complex(one(q), -log(abs(q)) / pi) : -im * (log(q) / pi)
+  q < 0 ? complex(one(q), -log(abs(q)) / pi) : -im * (log(q) / pi)
 end
 
 """
@@ -353,12 +353,12 @@ end
 Logarithm of the first Jacobi theta function.
 
 # Arguments
-- `z`: real or complex number or array of numbers
+- `z`: real or complex number
 - `q`: the nome
 """
-function ljtheta1(z, q::Number)
+function ljtheta1(z::Number, q::Number)
   @validateq(q)
-  return _ljtheta1.(z, taufromq(q))
+  return _ljtheta1(z, taufromq(q))
 end
 
 """
@@ -367,13 +367,13 @@ end
 First Jacobi theta function.
 
 # Arguments
-- `z`: real or complex number or array of numbers
+- `z`: real or complex number
 - `q`: the nome
 """
-function jtheta1(z, q::Number)
+function jtheta1(z::Number, q::Number)
   @validateq(q)
-  z,tau = promote(z, taufromq(q))
-  return _jtheta1.(z, tau)
+  z, tau = promote(z, taufromq(q))
+  return _jtheta1(z, tau)
 end
 
 """
@@ -382,12 +382,12 @@ end
 Logarithm of the second Jacobi theta function.
 
 # Arguments
-- `z`: real or complex number or array of numbers
+- `z`: real or complex number
 - `q`: the nome
 """
-function ljtheta2(z, q::Number)
+function ljtheta2(z::Number, q::Number)
   @validateq(q)
-  return _ljtheta2.(z, taufromq(q))
+  return _ljtheta2(z, taufromq(q))
 end
 
 """
@@ -396,13 +396,13 @@ end
 Second Jacobi theta function.
 
 # Arguments
-- `z`: real or complex number or array of numbers
+- `z`: real or complex number
 - `q`: the nome
 """
-function jtheta2(z, q::Number)
+function jtheta2(z::Number, q::Number)
   @validateq(q)
-  z,tau = promote(z, taufromq(q))
-  return _jtheta2.(z, tau)
+  z, tau = promote(z, taufromq(q))
+  return _jtheta2(z, tau)
 end
 
 """
@@ -411,12 +411,12 @@ end
 Logarithm of the third Jacobi theta function.
 
 # Arguments
-- `z`: real or complex number or array of complex numbers
+- `z`: real or complex number
 - `q`: the nome
 """
-function ljtheta3(z, q::Number)
+function ljtheta3(z::Number, q::Number)
   @validateq(q)
-  return _ljtheta3.(z, taufromq(q))
+  return _ljtheta3(z, taufromq(q))
 end
 
 """
@@ -425,13 +425,13 @@ end
 Third Jacobi theta function.
 
 # Arguments
-- `z`: real or complex number or array of numbers
+- `z`: real or complex number
 - `q`: the nome
 """
-function jtheta3(z, q::Number)
+function jtheta3(z::Number, q::Number)
   @validateq(q)
-  z,tau = promote(z, taufromq(q))
-  return _jtheta3.(z, tau)
+  z, tau = promote(z, taufromq(q))
+  return _jtheta3(z, tau)
 end
 
 """
@@ -440,12 +440,12 @@ end
 Logarithm of the fourth Jacobi theta function.
 
 # Arguments
-- `z`: real or complex number or array of complex numbers
+- `z`: real or complex number
 - `q`: the nome
 """
-function ljtheta4(z, q::Number)
+function ljtheta4(z::Number, q::Number)
   @validateq(q)
-  return _ljtheta4.(z, taufromq(q))
+  return _ljtheta4(z, taufromq(q))
 end
 
 """
@@ -454,13 +454,13 @@ end
 Fourth Jacobi theta function.
 
 # Arguments
-- `z`: real or complex number or array of numbers
+- `z`: real or complex number
 - `q`: the nome
 """
-function jtheta4(z, q::Number)
+function jtheta4(z::Number, q::Number)
   @validateq(q)
-  z,tau = promote(z, taufromq(q))
-  return _jtheta4.(z, tau)
+  z, tau = promote(z, taufromq(q))
+  return _jtheta4(z, tau)
 end
 
 """
@@ -475,13 +475,13 @@ function (`a=0,b=0.5`).
 # Arguments
 - `a`: first characteristic, a real or complex number
 - `b`: second characteristic, a real or complex number
-- `z`: real or complex number or array of numbers
-- `τ`: compelx number with positive imaginary part
+- `z`: real or complex number
+- `τ`: complex number with positive imaginary part
 """
-function jtheta_ab(a::Number, b::Number, z, τ::Complex)
+function jtheta_ab(a::Number, b::Number, z::Number, τ::Complex)
   @validatetau(τ)
-  a,b,z,τ = promote(a, b, z, τ)
-  return _jtheta_ab.(a, b, z, τ)
+  a, b, z, τ = promote(a, b, z, τ)
+  return _jtheta_ab(a, b, z, τ)
 end
 
 """
@@ -490,13 +490,13 @@ end
 Derivative of the first Jacobi theta function.
 
 # Arguments
-- `z`: real or complex number or array of numbers
+- `z`: real or complex number
 - `q`: the nome
 """
-function jtheta1dash(z, q::Number)
+function jtheta1dash(z::Number, q::Number)
   @validateq(q)
-  z,tau = promote(z, taufromq(q))
-  return _jtheta1dash.(z, tau)
+  z, tau = promote(z, taufromq(q))
+  return _jtheta1dash(z, tau)
 end
 
 """
@@ -925,7 +925,7 @@ Arithmetic-geometric mean.
 - `x`,`y`: real or complex numbers
 """
 function agm(x::Number, y::Number)
-  if any((x+y==0,x==0,y==0))
+  if any((x+y==0, x==0, y==0))
     return zero(promote_type(typeof(x), typeof(y)))
   end
   return pi * (x + y) / 4ellipticK(((x-y)/(x+y))^2)
@@ -960,13 +960,12 @@ end
 Eisenstein E-series of weight 2.
 
 # Arguments
-- `q`: nome, real or complex number; it must not be a negative real number and its modulus must be strictly smaller than 1
+- `q`: nome
 """
 function EisensteinE2(q::Number)
-  abs(q) < 1 || throw(ArgumentError("Invalid `q`."))
-  imag(q) != 0 || real(q) > 0 || throw(ArgumentError("Invalid `q`."))
-  tau = -1im * log(q) / pi / 2.0
-  return _EisensteinE2(tau)
+  @validateq(q)
+  tau = taufromq(q)
+  return _EisensteinE2(tau/2)
 end
 
 """
@@ -975,13 +974,12 @@ end
 Eisenstein E-series of weight 4.
 
 # Arguments
-- `q`: nome, real or complex number; it must not be a negative real number and its modulus must be strictly smaller than 1
+- `q`: nome
 """
 function EisensteinE4(q::Number)
-  abs(q) < 1 || throw(ArgumentError("Invalid `q`."))
-  imag(q) != 0 || real(q) > 0 || throw(ArgumentError("Invalid `q`."))
-  tau = -1im * log(q) / pi / 2
-  return _E4(tau)
+  @validateq(q)
+  tau = taufromq(q)
+  return _E4(tau/2)
 end
 
 """
@@ -990,13 +988,12 @@ end
 Eisenstein E-series of weight 6.
 
 # Arguments
-- `q`: nome, real or complex number; it must not be a negative real number and its modulus must be strictly smaller than 1
+- `q`: nome
 """
 function EisensteinE6(q::Number)
-  abs(q) < 1 || throw(ArgumentError("Invalid `q`."))
-  imag(q) != 0 || real(q) > 0 || throw(ArgumentError("Invalid `q`."))
-  tau = -1im * log(q) / pi / 2.0
-  return _E6(tau)
+  @validateq(q)
+  tau = taufromq(q)
+  return _E6(tau/2)
 end
 
 """
@@ -1055,13 +1052,13 @@ end
 Weierstrass p-function. One and only one of the parameters `tau`, `omega` or `g` must be given.
 
 # Arguments
-- `z`: real or complex number or array of numbers
+- `z`: real or complex number
 - `tau`: half-periods ratio, complex number with non negative imaginary part
 - `omega`: half-periods, a pair (tuple) of complex numbers
 - `g`: elliptic invariants, a pair (tuple) of complex numbers
 - `derivative`: order of differentiation, 0, 1, 2 or 3
 """
-function wp(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing, g::Union{Missing,Tuple{Number,Number}}=missing, derivative::Int64=0)
+function wp(z::Number; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing, g::Union{Missing,Tuple{Number,Number}}=missing, derivative::Int64=0)
   local omega1, weier, weierPrime
   0 ≤ derivative ≤ 3 || throw(ArgumentError("`derivative` must be between 0 and 3."))
   nmissing = ismissing(tau) + ismissing(omega) + ismissing(g)
@@ -1075,7 +1072,7 @@ function wp(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Nu
       end
       if derivative == 2
         g2 = _g2_from_omega1_and_tau(omega1, tau)
-        return 6 * weier * weier .- g2/2
+        return 6 * weier * weier - g2/2
       end
     end
     omega1 = 0.5
@@ -1091,7 +1088,7 @@ function wp(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Nu
       end
       if derivative == 2
         g2 = _g2_from_omega1_and_tau(omega1, tau)
-        return 6 * weier * weier .- g2/2
+        return 6 * weier * weier - g2/2
       end
     end
   end
@@ -1104,7 +1101,7 @@ function wp(z; tau::Union{Missing,Number}=missing, omega::Union{Missing,Tuple{Nu
       end
       if derivative == 2
         g2, g3 = g
-        return 6 * weier * weier .- g2/2
+        return 6 * weier * weier - g2/2
       end
     end
   end
@@ -1121,12 +1118,12 @@ end
 Weierstrass sigma-function. One and only one of the parameters `tau`, `omega` or `g` must be given.
 
 # Arguments
-- `z`: real or complex number or array of numbers
+- `z`: real or complex number
 - `tau`: half-periods ratio, complex number with non negative imaginary part
 - `omega`: half-periods, a pair (tuple) of complex numbers
 - `g`: elliptic invariants, a pair (tuple) of complex numbers
 """
-function wsigma(z; tau::Union{Missing,Complex}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing, g::Union{Missing,Tuple{Number,Number}}=missing)
+function wsigma(z::Number; tau::Union{Missing,Complex}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing, g::Union{Missing,Tuple{Number,Number}}=missing)
   local omega1
   nmissing = ismissing(tau) + ismissing(omega) + ismissing(g)
   nmissing == 2 || throw(ArgumentError("You must supply either `tau`, `omega` or `g`."))
@@ -1141,10 +1138,10 @@ function wsigma(z; tau::Union{Missing,Complex}=missing, omega::Union{Missing,Tup
     omega1, tau = _omega1_and_tau(g)
   end
   w1 = -2 * omega1 / pi
-  j1 = _jtheta1.(z/w1, tau)
+  j1 = _jtheta1(z/w1, tau)
   f = _jtheta1dash0(tau)
   h = -pi/6/w1 * _jtheta1dashdashdash0(tau) / f
-  return w1 * exp.(h * z .* z / w1 / pi) .* j1 / f
+  return w1 * exp(h * z * z / w1 / pi) * j1 / f
 end
 
 """
@@ -1153,12 +1150,12 @@ end
 Weierstrass zeta-function. One and only one of the parameters `tau`, `omega` or `g` must be given.
 
 # Arguments
-- `z`: real or complex number or array of numbers
+- `z`: real or complex number
 - `tau`: half-periods ratio, complex number with non negative imaginary part
 - `omega`: half-periods, a pair of complex numbers
 - `g`: elliptic invariants, a pair of complex numbers
 """
-function wzeta(z; tau::Union{Missing,Complex}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing, g::Union{Missing,Tuple{Number,Number}}=missing)
+function wzeta(z::Number; tau::Union{Missing,Complex}=missing, omega::Union{Missing,Tuple{Number,Number}}=missing, g::Union{Missing,Tuple{Number,Number}}=missing)
   local omega1, omega2
   nmissing = ismissing(tau) + ismissing(omega) + ismissing(g)
   nmissing == 2 || throw(ArgumentError("You must supply either `tau`, `omega` or `g`."))
@@ -1174,26 +1171,26 @@ function wzeta(z; tau::Union{Missing,Complex}=missing, omega::Union{Missing,Tupl
       imag(tau) > 0 || throw(ArgumentError("Invalid `omega`."))
     end
     if omega1 == Inf && omega2 == 1im*Inf # i.e. g2=0 g3=0
-      return 1 ./ z
+      return 1 / z
     end
     if omega1 == pi/sqrt(6) && omega2 == 1im*Inf # i.e. g2=3 g3=1
-      return z/2 + sqrt(3/2) / tan.(sqrt(3/2)*z)
+      return z/2 + sqrt(3/2) / tan(sqrt(3/2)*z)
     end
   end
   if !ismissing(g)
     g2, g3 = g
     if g2 == 0 && g3 == 0
-      return 1 ./ z
+      return 1 / z
     end
     if g2 == 3 && g3 == 1
-      return z/2 + sqrt(3/2) / tan.(sqrt(3/2)*z)
+      return z/2 + sqrt(3/2) / tan(sqrt(3/2)*z)
     end
     omega1, tau = _omega1_and_tau(g)
   end
   w1 = - omega1 / pi
   p = 1.0 / w1 / 2.0
   eta1 = p / 6.0 / w1 * _jtheta1dashdashdash0(tau) / _jtheta1dash0(tau)
-  return - eta1 * z + p * _dljtheta1.(p * z, tau)
+  return - eta1 * z + p * _dljtheta1(p * z, tau)
 end
 
 """
@@ -1202,11 +1199,11 @@ end
 Neville S-theta function. Only one of the parameters `tau` or `m` must be supplied.
 
 # Arguments
-- `z`: real or complex number or array of numbers
+- `z`: real or complex number
 - `tau`: complex number with nonnegative imaginary part
 - `m`: real or complex number, square of the elliptic modulus
 """
-function thetaS(z; tau::Union{Missing,Complex}=missing, m::Union{Missing,Number}=missing)
+function thetaS(z::Number; tau::Union{Missing,Complex}=missing, m::Union{Missing,Number}=missing)
   tau = _check_and_get_tau_from_m(tau, m)
   return _thetaS(z, tau)
 end
@@ -1217,11 +1214,11 @@ end
 Neville C-theta function. Only one of the parameters `tau` or `m` must be supplied.
 
 # Arguments
-- `z`: real or complex number or array of numbers
+- `z`: real or complex number
 - `tau`: complex number with nonnegative imaginary part
 - `m`: real or complex number, square of the elliptic modulus
 """
-function thetaC(z; tau::Union{Missing,Complex}=missing, m::Union{Missing,Number}=missing)
+function thetaC(z::Number; tau::Union{Missing,Complex}=missing, m::Union{Missing,Number}=missing)
   tau = _check_and_get_tau_from_m(tau, m)
   return _thetaC(z, tau)
 end
@@ -1232,11 +1229,11 @@ end
 Neville D-theta function. Only one of the parameters `tau` or `m` must be supplied.
 
 # Arguments
-- `z`: real or complex number or array of numbers
+- `z`: real or complex number
 - `tau`: complex number with nonnegative imaginary part
 - `m`: real or complex number, square of the elliptic modulus
 """
-function thetaD(z; tau::Union{Missing,Complex}=missing, m::Union{Missing,Number}=missing)
+function thetaD(z::Number; tau::Union{Missing,Complex}=missing, m::Union{Missing,Number}=missing)
   tau = _check_and_get_tau_from_m(tau, m)
   return _thetaD(z, tau)
 end
@@ -1247,11 +1244,11 @@ end
 Neville N-theta function. Only one of the parameters `tau` or `m` must be supplied.
 
 # Arguments
-- `z`: real or complex number or vector/array of complex numbers
+- `z`: real or complex number
 - `tau`: complex number with nonnegative imaginary part
 - `m`: real or complex number, square of the elliptic modulus
 """
-function thetaN(z; tau::Union{Missing,Complex}=missing, m::Union{Missing,Number}=missing)
+function thetaN(z::Number; tau::Union{Missing,Complex}=missing, m::Union{Missing,Number}=missing)
   tau = _check_and_get_tau_from_m(tau, m)
   return _thetaN(z, tau)
 end
@@ -1263,11 +1260,11 @@ Jacobi elliptic functions. Only one of the parameters `tau` or `m` must be suppl
 
 # Arguments
 - `kind`: a string with two characters among 'c', 'd', 'n' or 's'; this string specifies the function: the two letters respectively denote the basic functions `sn`, `cn`, `dn` and `1`, and the string specifies the ratio of two such functions, e.g. `ns=1/sn` and `cd=cn/dn`
-- `u`: a real or complex number or array of numbers
+- `u`: a real or complex number
 - `tau`: complex number with nonnegative imaginary part
 - `m`: real or complex number, square of the elliptic modulus
 """
-function jellip(kind::String, u; tau::Union{Missing,Complex}=missing, m::Union{Missing,Number}=missing)
+function jellip(kind::String, u::Number; tau::Union{Missing,Complex}=missing, m::Union{Missing,Number}=missing)
   local num, den
   length(kind) == 2 || throw(ArgumentError("The string `kind` must contain two characters."))
   f1, f2 = kind
@@ -1291,7 +1288,7 @@ function jellip(kind::String, u; tau::Union{Missing,Complex}=missing, m::Union{M
   else
       den = _thetaS(u, tau)
   end
-  return num ./ den
+  return num / den
 end
 
 """
@@ -1300,13 +1297,13 @@ end
 Amplitude function.
 
 # Arguments
-- `u`: real or complex number or array of numbers
+- `u`: real or complex number
 - `m`: real or complex number, square of the elliptic modulus
 """
-function am(u, m::Number)
-  w = asin.(jellip("sn", u; m = m))
-  k = round.(real.(u) / pi) + round.(real.(w) / pi)
-  return (-1).^k .* w + k * pi
+function am(u::Number, m::Number)
+  w = asin(jellip("sn", u; m = m))
+  k = round(real(u) / pi) + round(real(w) / pi)
+  return (-1)^k * w + k * pi
 end
 
 end  # module Jacobi
