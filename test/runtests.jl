@@ -115,14 +115,13 @@ using Test
     b   = 1 - 0.6im
     z   = 0.1 + 0.4im
     tau = 0.2 + 0.3im
-    q   = qfromtau(tau)
-    jab = jtheta_ab(a, b, z, q)
+    jab = jtheta_ab(a, b, z, tau)
     @test isapprox(
-      jtheta_ab(a, b, z + pi, q), 
+      jtheta_ab(a, b, z + pi, tau),
       jab * exp(2im*a*pi)
     )
     @test isapprox(
-      jtheta_ab(a, b, z + tau*pi, q), 
+      jtheta_ab(a, b, z + tau*pi, tau),
       jab * exp(-1im*(tau*pi + 2*z + 2*b*pi))
     )
   end
@@ -494,4 +493,8 @@ using Test
   @testset "Negative real Q" begin
     jtheta1(1.0, -0.5 + 1e-30im) == jtheta1(1.0, -0.5)
   end
+end
+
+if haskey(ENV, "BENCHMARK")
+  include("benchmark.jl")
 end

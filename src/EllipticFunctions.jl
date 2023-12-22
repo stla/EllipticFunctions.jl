@@ -1,68 +1,42 @@
 module EllipticFunctions
 
 import SpecialFunctions
+using IrrationalConstants
 
-export qfromtau
-export taufromq
-export ljtheta1
-export jtheta1
-export ljtheta2
-export jtheta2
-export ljtheta3
-export jtheta3
-export ljtheta4
-export jtheta4
-export jtheta_ab
-export jtheta1dash
+export qfromtau, taufromq
+export ljtheta1, ljtheta2, ljtheta3, ljtheta4
+export jtheta1, jtheta2, jtheta3, jtheta4
+export jtheta_ab, jtheta1dash
 export etaDedekind
 export lambda
 export kleinj
 export kleinjinv
-export CarlsonRF
-export CarlsonRC
-export CarlsonRD
-export CarlsonRG
-export CarlsonRJ
-export ellipticE
-export ellipticF
-export ellipticK
-export ellipticZ
-export ellipticPI
+export CarlsonRF, CarlsonRC, CarlsonRD, CarlsonRG, CarlsonRJ
+export ellipticE, ellipticF, ellipticK, ellipticZ, ellipticPI
 export agm
-export EisensteinE2
-export EisensteinE4
-export EisensteinE6
+export EisensteinE2, EisensteinE4, EisensteinE6
 export halfPeriods
 export ellipticInvariants
 export wp
 export wsigma
 export wzeta
-export thetaC
-export thetaD
-export thetaN
-export thetaS
+export thetaC, thetaD, thetaN, thetaS
 export jellip
 export am
 
-@inline function validateq(q::Number, err = ArgumentError("|q| must be less than 1"))
-    abs(q) < 1 || throw(err)
-    return
+macro validateq(q, errmsg="|q| must be less than 1")
+  :(abs($(esc(q))) < 1 || throw(ArgumentError($errmsg)))
 end
 
-@inline function validatetau(tau::Number, err = ArgumentError("imag(tau) must be positive"))
-    imag(tau) > 0 || throw(err)
-    return
+macro validatetau(tau, errmsg="imag(tau) must be positive")
+  :(imag($(esc(tau))) >0 || throw(ArgumentError($errmsg)))
 end
 
-function xcispi(x)
-    return exp(1im * (pi * x))
-end
+xcispi(x::T) where{T<:Number} = exp(1im * (pi * x))
+csqrt(x::_) where{_<:Real} = sqrt(Complex(x))
+csqrt(x::Complex{<:Real}) = sqrt(x)
 
-function csqrt(x::Number)
-  return sqrt(Complex(x))
-end
-
-function areclose(z1::S, z2::S) where {T <: Real, S <: Union{T, Complex{T}}}
+function areclose(z1::S, z2::S) where {T<:Real,S<:Union{T,Complex{T}}}
   z1 == z2 && (return true)
   eps2 = eps(T)^2
   mod2_z2 = abs2(z2)
@@ -70,13 +44,16 @@ function areclose(z1::S, z2::S) where {T <: Real, S <: Union{T, Complex{T}}}
   return abs2(z1 - z2) < 4.0 * eps2 * maxmod2
 end
 
-function modulo(a::Real, p::Real)
+modulo(a,p) = modulo(promote(a,p)...)
+function modulo(a::T, p::T) where{T<:Real}
   i = a > 0 ? floor(a / p) : ceil(a / p)
   return a - i * p
 end
 
-function calctheta3(z::Number, tau::Complex)
-  out = Complex(one(z) * one(tau))
+calctheta3(z,tau) = calctheta3(promote(z,tau)...)
+function calctheta3(z::Complex{T}, tau::Complex{T}) where{T<:Real}
+  out::Complex{T} = one(tau)
+
   n = 0
   while true
     n += 1
@@ -85,10 +62,8 @@ function calctheta3(z::Number, tau::Complex)
       exp(n * 1im * (pi * (n * tau - 2 * z)))
     out += qweight
     modulus = abs(out)
-    if isnan(modulus)
-      error("NaN has occured in the summation.")
-    elseif isinf(modulus)
-      error("Infinity has occured in the summation.")
+    if isnan(modulus) || isinf(modulus)
+      error("NaN or Infinity occured in the summation: ", modulus)
     elseif n >= 3 && areclose(out + qweight, out)
       break
     end
@@ -119,9 +94,7 @@ function argtheta3(z::Number, tau::Complex, passes::Int64)
   return out
 end
 
-function dologtheta4(z::Number, tau::Complex, passes::Int64) 
-  return dologtheta3(z + 0.5, tau, passes + 1)
-end
+dologtheta4(z::Number, tau::Complex, passes::Int64) = dologtheta3(z + 0.5, tau, passes + 1)
 
 function dologtheta3(z::Number, tau::Complex, passes::Int64)
   passes += 1
@@ -149,102 +122,56 @@ function dologtheta3(z::Number, tau::Complex, passes::Int64)
   return out
 end
 
-function M(z::Number, tau::Complex)
-  return 1im * (z + tau / 4) * pi
-end
+M(z::Number, tau::Complex) = 1im * (z + tau / 4) * pi
 
-function _ljtheta2_raw(z::Number, tau::Complex)
-  return M(z, tau) + dologtheta3(z + 0.5 * tau, tau, 0)
-end
+_ljtheta2_raw(z::Number, tau::Complex) = M(z, tau) + dologtheta3(z + 0.5 * tau, tau, 0)
+_ljtheta1_raw(z::Number, tau::Complex) = _ljtheta2_raw(z - 0.5, tau)
+_ljtheta3_raw(z::Number, tau::Complex) = dologtheta3(z, tau, 0)
+_ljtheta4_raw(z::Number, tau::Complex) = dologtheta4(z, tau, 0)
 
-function _jtheta2_raw(z::Number, tau::Complex)
-  return exp(_ljtheta2_raw(z, tau))
-end
+_jtheta2_raw(z::Number, tau::Complex) = exp(_ljtheta2_raw(z, tau))
+_jtheta1_raw(z::Number, tau::Complex) = exp(_ljtheta1_raw(z, tau))
+_jtheta3_raw(z::Number, tau::Complex) = exp(_ljtheta3_raw(z, tau))
+_jtheta4_raw(z::Number, tau::Complex) = exp(_ljtheta4_raw(z, tau))
 
-function _ljtheta1_raw(z::Number, tau::Complex)
-  return _ljtheta2_raw(z - 0.5, tau)
-end
+_jtheta1(z::Number, tau::Complex) = _jtheta1_raw(z*invπ, tau)
+_jtheta2(z::Number, tau::Complex) = _jtheta2_raw(z*invπ, tau)
+_jtheta3(z::Number, tau::Complex) = _jtheta3_raw(z*invπ, tau)
+_jtheta4(z::Number, tau::Complex) = _jtheta4_raw(z*invπ, tau)
 
-function _jtheta1_raw(z::Number, tau::Complex)
-  return exp(_ljtheta1_raw(z, tau))
-end
+principal_log_branch(z) = complex(real(z), rem(imag(z),twoπ,RoundNearest))
 
-function _ljtheta3_raw(z::Number, tau::Complex)
-  return dologtheta3(z, tau, 0)
-end
+_ljtheta1(z::Number, tau::Complex) = principal_log_branch(_ljtheta1_raw(z*invπ, tau))
+_ljtheta2(z::Number, tau::Complex) = principal_log_branch(_ljtheta2_raw(z*invπ, tau))
+_ljtheta3(z::Number, tau::Complex) = principal_log_branch(_ljtheta3_raw(z*invπ, tau))
+_ljtheta4(z::Number, tau::Complex) = principal_log_branch(_ljtheta4_raw(z*invπ, tau))
 
-function _jtheta3_raw(z::Number, tau::Complex) 
-  return exp(_ljtheta3_raw(z, tau))
-end
 
-function _ljtheta4_raw(z::Number, tau::Complex)
-  return dologtheta4(z, tau, 0)
-end
-
-function _jtheta4_raw(z::Number, tau::Complex)
-  return exp(_ljtheta4_raw(z, tau))
-end
-
-function _jtheta1(z::Number, tau::Complex) 
-  return _jtheta1_raw(z/pi, tau);
-end
-
-function _jtheta2(z::Number, tau::Complex) 
-  return _jtheta2_raw(z/pi, tau);
-end
-
-function _jtheta3(z::Number, tau::Complex) 
-  return _jtheta3_raw(z/pi, tau);
-end
-
-function _jtheta4(z::Number, tau::Complex) 
-  return _jtheta4_raw(z/pi, tau);
-end
-
-function principal_log_branch(z)
-  y = imag(z)
-  (y ≤ π) && (-y < π) && return z
-  twopi = 2 * one(y) * π
-  y = mod(y, twopi)
-  y > π && (y -= twopi)
-  return complex(real(z), y)
-end
-
-function _ljtheta1(z::Number, tau::Complex)
-  return principal_log_branch(_ljtheta1_raw(z/pi, tau))
-end
-
-function _ljtheta2(z::Number, tau::Complex)
-  return principal_log_branch(_ljtheta2_raw(z/pi, tau))
-end
-
-function _ljtheta3(z::Number, tau::Complex)
-  return principal_log_branch(_ljtheta3_raw(z/pi, tau))
-end
-
-function _ljtheta4(z::Number, tau::Complex)
-  return principal_log_branch(_ljtheta4_raw(z/pi, tau))
-end
-
-function _jtheta_ab(a::Number, b::Number, z::Number, tau::Complex) 
+function _jtheta_ab(a::Number, b::Number, z::Number, tau::Complex)
   alpha = a * tau
-  beta  = b + z/pi
-  C = xcispi(a * (alpha + 2*beta)) 
+  beta  = b + z*invπ
+  C = xcispi(a * (alpha + 2*beta))
   return C * _jtheta3_raw(alpha + beta, tau)
 end
 
-function _jtheta1dash(z::Number, tau::Complex)
+_jtheta1dash(z, tau) = _jtheta1dash(promote(z,tau)...)
+function _jtheta1dash(z::Complex{T}, tau::Complex{T}) where{T<:Real}
+  T1 = promote_type(T,Float64)
+  CT1 = Complex{T1}
   q = xcispi(tau)
-  out = complex(zero(q))
-  alt = -one(q)
+  out = zero(CT1)
+  alt = -one(CT1)
   q² = q * q
-  q²ⁿ = one(q)
-  qⁿ⁽ⁿ⁺¹⁾ = one(q)
-  for n = 0:3000
-    if n > 0
-      q²ⁿ *= q²
-      qⁿ⁽ⁿ⁺¹⁾ *= q²ⁿ
-    end
+  q²ⁿ = one(CT1)
+  qⁿ⁽ⁿ⁺¹⁾ = one(CT1)
+
+  # strip out n=0
+  alt = -alt
+  k = one(CT1)
+  out = out + alt * qⁿ⁽ⁿ⁺¹⁾ * k * cos(k * z)
+  for n = 1:3000
+    q²ⁿ *= q²
+    qⁿ⁽ⁿ⁺¹⁾ *= q²ⁿ
     alt = -alt
     k = 2 * n + one(q)
     outnew = out + alt * qⁿ⁽ⁿ⁺¹⁾ * k * cos(k * z)
@@ -257,19 +184,17 @@ function _jtheta1dash(z::Number, tau::Complex)
 end
 
 function _etaDedekind(tau::Complex)
-  return xcispi(-1 / tau / 12.0) *
-    _jtheta3_raw((-1 / tau + 1.0) / 2.0, -3.0 / tau) / sqrt(-1im * tau)
+  χ = 1 / tau
+  return xcispi(-χ / 12) *
+    _jtheta3_raw( -χ/2 + 1/2, -3χ) / sqrt(-tau*im)
 end
 
-function isvector(x)
-  return length(size(x)) == 1
-end
 
 function _EisensteinE2(tau::Complex)
   j3 = _jtheta3_raw(0, tau)
   lbd = (_jtheta2_raw(0, tau) / j3)^4
   j3sq = j3^2
-  return 6.0/pi * ellipticE(lbd) * j3sq - j3sq^2 - _jtheta4_raw(0, tau)^4
+  6 * ellipticE(lbd) * j3sq * invπ - j3sq^2 - _jtheta4_raw(0, tau)^4
 end
 
 function _jtheta1dash0(tau::Complex)
@@ -282,16 +207,13 @@ function _jtheta1dashdashdash0(tau::Complex)
 end
 
 function _dljtheta1(z::Number, tau::Complex)
-  if z == 0
-    return _jtheta1dash0(tau) / _jtheta1_raw(0.0, tau)
-  end
-  return _jtheta1dash(z, tau) / _jtheta1(z, tau)
+  z == 0 ?
+    _jtheta1dash0(tau) / _jtheta1_raw(0.0, tau) :
+    _jtheta1dash(z, tau) / _jtheta1(z, tau)
 end
 
 function _E4(tau::Complex)
-  return (
-    _jtheta2_raw(0, tau)^8 + _jtheta3_raw(0, tau)^8 + _jtheta4_raw(0, tau)^8
-  ) / 2
+  (_jtheta2_raw(0, tau)^8 + _jtheta3_raw(0, tau)^8 + _jtheta4_raw(0, tau)^8) / 2
 end
 
 function _E6(tau::Complex)
@@ -300,36 +222,36 @@ function _E6(tau::Complex)
   j4 = _jtheta4_raw(0, tau)
   x3 = j3^4
   x4 = j4^4
-  return (x3^3 + x4^3 - 3.0 * j2^8 * (x3 + x4)) / 2.0
+  (x3^3 + x4^3 - 3.0 * j2^8 * (x3 + x4)) / 2.0
 end
 
 function _omega1_and_tau(g)
   g2, g3 = g
   if g2 == 0
-    omega1 = SpecialFunctions.gamma(1/3)^3 / 4 / pi / g3^(1/6)
+    omega1 = SpecialFunctions.gamma(1/3)^3 * inv4π / g3^(1/6)
     tau    = 0.5 + 1im * sqrt(3)/2
   else
     g2cube = g2*g2*g2
     j      = 1728 * g2cube / (g2cube - 27*g3*g3)
     if isinf(j)
-      return (-1im*pi/2/sqrt(3), complex(Inf, Inf))
+      return (-1im*halfπ/sqrt(3), complex(Inf, Inf))
     end
     tau = kleinjinv(j)
     if g3 == 0
       omega1 = 1im * pi * sqrt(sqrt(1.0 / g2 / 12 * _E4(tau)))
     else
-      G6_over_G4 = 2.0 * pi * pi / 21.0 * _E6(tau) / _E4(tau)
-      omega1     = csqrt(7.0 * G6_over_G4 * g2 / (12.0 * g3)) 
+      G6_over_G4 = twoπ * pi / 21.0 * _E6(tau) / _E4(tau)
+      omega1     = csqrt(7.0 * G6_over_G4 * g2 / (12.0 * g3))
     end
     #omega1 = 1im * pi * sqrt(sqrt(1.0 / g2 / 12 * _E4(tau)))
   end
-  return (omega1, tau)
+  (omega1, tau)
 end
 
 function _g2_from_omega1_and_tau(omega1::Number, tau::Complex)
   j2 = _jtheta2_raw(0, tau)
   j3 = _jtheta3_raw(0, tau)
-  return 4/3 * (pi/2/omega1)^4 * (j2^8 - (j2*j3)^4 + j3^8)
+  4/3 * (halfπ/omega1)^4 * (j2^8 - (j2*j3)^4 + j3^8)
 end
 
 function _wpFromTau(z, tau::Complex)
@@ -337,11 +259,11 @@ function _wpFromTau(z, tau::Complex)
   j3 = _jtheta3_raw(0, tau)
   j1 = _jtheta1_raw.(z, tau)
   j4 = _jtheta4_raw.(z, tau)
-  return (pi * j2 * j3 * j4 ./ j1)^2 .- (pi^2 * (j2^4 + j3^4) / 3.0)
+  (pi * j2 * j3 * j4 ./ j1)^2 .- (pi^2 * (j2^4 + j3^4) / 3.0)
 end
 
 function _wpDerivative(z, omega1::Number, tau::Complex)
-  w1 = 2 * omega1 / pi
+  w1 = 2 * omega1 * invπ
   z1 = - z / 2 / omega1
   j1 = _jtheta1_raw.(z1, tau)
   j2 = _jtheta2_raw.(z1, tau)
@@ -355,23 +277,23 @@ end
 
 function _thetaS(z, tau::Complex)
   j3sq = _jtheta3_raw(zero(tau), tau)^2
-  zprime = z / j3sq / pi
+  zprime = z / j3sq * invπ
   return j3sq * _jtheta1_raw.(zprime, tau) / _jtheta1dash0(tau)
 end
 
 function _thetaC(z, tau::Complex)
-  zprime = z / _jtheta3_raw(zero(tau), tau)^2 / pi
+  zprime = z / _jtheta3_raw(zero(tau), tau)^2 * invπ
   return _jtheta2_raw.(zprime, tau) / _jtheta2_raw(zero(tau), tau)
 end
 
 function _thetaN(z, tau::Complex)
-  zprime = z / _jtheta3_raw(zero(tau), tau)^2 / pi
+  zprime = z / _jtheta3_raw(zero(tau), tau)^2  * invπ
   return _jtheta4_raw.(zprime, tau) / _jtheta4_raw(zero(tau), tau)
 end
 
 function _thetaD(z, tau::Complex)
   j3 = _jtheta3_raw(zero(tau), tau)
-  zprime = z / j3^2 / pi
+  zprime = z / j3^2  * invπ
   return _jtheta3_raw.(zprime, tau) / j3
 end
 
@@ -383,10 +305,10 @@ function _check_and_get_tau_from_m(tau::Union{Missing,Number}, m::Union{Missing,
   nmissing = ismissing(tau) + ismissing(m)
   nmissing == 1 || throw(ArgumentError("You must supply either `tau` or `m`."))
   if !ismissing(tau)
-    validatetau(tau)
+    @validatetau(tau)
   else
     tau = _tau_from_m(m)
-    validatetau(tau, ArgumentError("Invalid value of `m`."))
+    @validatetau(tau, "Invalid value of `m`.")
   end
   return tau
 end
@@ -403,7 +325,7 @@ The nome `q` given the `tau` parameter.
 - `tau`: complex number with nonnegative imaginary part
 """ 
 function qfromtau(tau::Complex)
-  validatetau(tau)
+  @validatetau(tau)
   return xcispi(tau)
 end
 
@@ -414,21 +336,17 @@ The `tau` parameter given the nome `q`.
 
 # Arguments
 - `q`: A real or complex number with modulus strictly smaller than 1
-""" 
+"""
 function taufromq(q::Complex)
-    validateq(q)
-    return -im * (log(q) / pi)
+  @validateq(q)
+  -im * (log(q) / pi)
 end
 
 function taufromq(q::Real)
-    validateq(q)
-    if q < 0
-        return complex(one(q), -log(abs(q)) / pi)
-    else
-        return -im * (log(q) / pi)
-    end
+  @validateq(q)
+  q<0 ? complex(one(q), -log(abs(q)) / pi) : -im * (log(q) / pi)
 end
-  
+
 """
     ljtheta1(z, q)
 
@@ -439,7 +357,7 @@ Logarithm of the first Jacobi theta function.
 - `q`: the nome
 """
 function ljtheta1(z, q::Number)
-  validateq(q)
+  @validateq(q)
   return _ljtheta1.(z, taufromq(q))
 end
 
@@ -453,7 +371,7 @@ First Jacobi theta function.
 - `q`: the nome
 """
 function jtheta1(z, q::Number)
-  validateq(q)
+  @validateq(q)
   z,tau = promote(z, taufromq(q))
   return _jtheta1.(z, tau)
 end
@@ -468,7 +386,7 @@ Logarithm of the second Jacobi theta function.
 - `q`: the nome
 """
 function ljtheta2(z, q::Number)
-  validateq(q)
+  @validateq(q)
   return _ljtheta2.(z, taufromq(q))
 end
 
@@ -482,7 +400,7 @@ Second Jacobi theta function.
 - `q`: the nome
 """
 function jtheta2(z, q::Number)
-  validateq(q)
+  @validateq(q)
   z,tau = promote(z, taufromq(q))
   return _jtheta2.(z, tau)
 end
@@ -497,7 +415,7 @@ Logarithm of the third Jacobi theta function.
 - `q`: the nome
 """
 function ljtheta3(z, q::Number)
-  validateq(q)
+  @validateq(q)
   return _ljtheta3.(z, taufromq(q))
 end
 
@@ -511,7 +429,7 @@ Third Jacobi theta function.
 - `q`: the nome
 """
 function jtheta3(z, q::Number)
-  validateq(q)
+  @validateq(q)
   z,tau = promote(z, taufromq(q))
   return _jtheta3.(z, tau)
 end
@@ -526,7 +444,7 @@ Logarithm of the fourth Jacobi theta function.
 - `q`: the nome
 """
 function ljtheta4(z, q::Number)
-  validateq(q)
+  @validateq(q)
   return _ljtheta4.(z, taufromq(q))
 end
 
@@ -540,30 +458,30 @@ Fourth Jacobi theta function.
 - `q`: the nome
 """
 function jtheta4(z, q::Number)
-  validateq(q)
+  @validateq(q)
   z,tau = promote(z, taufromq(q))
   return _jtheta4.(z, tau)
 end
 
 """
-    jtheta_ab(a, b, z, q)
+    jtheta_ab(a, b, z, τ)
 
 Jacobi theta function with characteristics. This is a family of functions
-parameterized by `a` and `b`, which contains the opposite of the first Jacobi 
-theta function (`a=b=0.5`), the second Jacobi theta function (`a=0.5,b=0`), 
-the third Jacobi theta function (`a=b=0`), and the fourth Jacobi theta 
+parameterized by `a` and `b`, which contains the opposite of the first Jacobi
+theta function (`a=b=0.5`), the second Jacobi theta function (`a=0.5,b=0`),
+the third Jacobi theta function (`a=b=0`), and the fourth Jacobi theta
 function (`a=0,b=0.5`).
 
 # Arguments
 - `a`: first characteristic, a real or complex number
 - `b`: second characteristic, a real or complex number
 - `z`: real or complex number or array of numbers
-- `q`: the nome
+- `τ`: compelx number with positive imaginary part
 """
-function jtheta_ab(a::Number, b::Number, z, q::Number)
-  validateq(q)
-  a,b,z,tau = promote(a, b, z, taufromq(q))
-  return _jtheta_ab.(a, b, z, tau)
+function jtheta_ab(a::Number, b::Number, z, τ::Complex)
+  @validatetau(τ)
+  a,b,z,τ = promote(a, b, z, τ)
+  return _jtheta_ab.(a, b, z, τ)
 end
 
 """
@@ -576,7 +494,7 @@ Derivative of the first Jacobi theta function.
 - `q`: the nome
 """
 function jtheta1dash(z, q::Number)
-  validateq(q)
+  @validateq(q)
   z,tau = promote(z, taufromq(q))
   return _jtheta1dash.(z, tau)
 end
@@ -590,7 +508,7 @@ Dedekind eta function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function etaDedekind(tau::Complex)
-  validatetau(tau)
+  @validatetau(tau)
   return _etaDedekind(tau)
 end
 
@@ -603,7 +521,7 @@ Lambda modular function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function lambda(tau::Complex)
-  validatetau(tau)
+  @validatetau(tau)
   return (_jtheta2_raw(0, tau) / _jtheta3_raw(0, tau))^4
 end
 
@@ -616,7 +534,7 @@ Klein j-invariant function.
 - `tau`: complex number with nonnegative imaginary part
 """
 function kleinj(tau::Complex)
-  validatetau(tau)
+  @validatetau(tau)
   lbd = (_jtheta2_raw(0, tau) / _jtheta3_raw(0, tau))^4
   x = lbd * (1.0 - lbd)
   return 256 * (1/x - 1)^2 * (1 - x)  #256 * (1-x)^3 / x^2
@@ -815,7 +733,7 @@ Incomplete elliptic integral of the first kind.
 """
 function ellipticF(phi::Number, m::Number)
   local k
-  if phi == 0 || m == Inf || m == -Inf
+  if iszero(phi) || isinf(m)
     return complex(0.0, 0.0)
   end
   rphi = real(phi)
@@ -937,14 +855,9 @@ function ellipticZ(phi::Number, m::Number)
   end
   if m == 1
     rl = real(phi)
-    if abs(rl) <= pi/2
-      return sin(phi)
-    end
-    if rl > pi/2
-      k = ceil(rl/pi - 0.5)
-      return sin(phi - k*pi)
-    end
-    k = -floor(0.5 - rl/pi)
+    k = abs(rl) <= pi/2 ? 0 :
+      rl > pi/2 ? ceil(rl/pi - 0.5) :
+      -floor(0.5 - rl/pi)
     return sin(phi - k*pi)
   end
   return ellipticE(phi, m) - ellipticE(m)/ellipticK(m) * ellipticF(phi, m)
@@ -1012,10 +925,10 @@ Arithmetic-geometric mean.
 - `x`,`y`: real or complex numbers
 """
 function agm(x::Number, y::Number)
-  if x + y == 0 || x == 0 || y == 0
+  if any((x+y==0,x==0,y==0))
     return zero(promote_type(typeof(x), typeof(y)))
   end
-  return pi * (x + y) / 4 / ellipticK(((x-y)/(x+y))^2)
+  return pi * (x + y) / 4ellipticK(((x-y)/(x+y))^2)
 end
 
 """
