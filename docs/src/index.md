@@ -40,11 +40,6 @@ image = colormap.(f(3*z))
 
 ## Functions
 
-The Weierstrass elliptic functions ``\wp``, ``\sigma`` and ``\zeta`` 
-are vectorized in the variable ``z``. That means you do not need to 
-use broadcasting in order to apply them to an array of ``z`` values 
-(this would be slower).
-
 ```@docs
 ljtheta1
 jtheta1
