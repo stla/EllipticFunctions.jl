@@ -780,7 +780,7 @@ Complete elliptic integral of the first kind.
 - `m`: real or complex number, the squared modulus
 """
 function ellipticK(m::Number)
-  return ellipticF(pi * one(m) / 2, m)
+  return pi * one(m) / (2 * agm(sqrt(1-Complex(m)), 1))
 end
 
 """
@@ -928,7 +928,17 @@ function agm(x::Number, y::Number)
   if any((x+y==0, x==0, y==0))
     return zero(promote_type(typeof(x), typeof(y)))
   end
-  return pi * (x + y) / 4ellipticK(((x-y)/(x+y))^2)
+  a, b = promote(Complex(x), Complex(y))
+  while !areclose(a, b)
+    a1 = (a + b) / 2
+    b1 = sqrt(a * b)
+    if areclose(a, a1) && areclose(b, b1)
+      break
+    end
+    a = a1
+    b = b1
+  end
+  return (a + b) / 2
 end
 
 """
